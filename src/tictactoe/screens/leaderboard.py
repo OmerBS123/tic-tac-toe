@@ -2,7 +2,7 @@
 Leaderboard screen logic for displaying player statistics.
 """
 
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from ..storage import Storage, PlayerStats
 from ..logger import get_logger

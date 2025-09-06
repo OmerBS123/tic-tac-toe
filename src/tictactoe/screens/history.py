@@ -163,7 +163,8 @@ class HistoryManager:
 
         return {"name": player_name, "total_matches": total_matches, "wins": wins, "losses": losses, "draws": draws, "win_percentage": round(win_percentage, 1), "pvp_matches": pvp_matches, "pvai_matches": pvai_matches}
 
-    def get_filter_options(self) -> list[str]:
+    @staticmethod
+    def get_filter_options() -> list[str]:
         """
         Get available filter options for match history.
 
@@ -172,7 +173,8 @@ class HistoryManager:
         """
         return ["All", "PvP", "AI-Easy", "AI-Medium", "AI-Hard"]
 
-    def apply_filter(self, filter_option: str) -> str | None:
+    @staticmethod
+    def apply_filter(filter_option: str) -> str | None:
         """
         Convert filter option to storage filter mode.
 

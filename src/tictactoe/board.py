@@ -49,7 +49,7 @@ class Board:
             move: Tuple of (row, col) coordinates to undo
         """
         row, col = move
-        if not self.is_valid_move(move):
+        if not (0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE):
             return
 
         self.board[row, col] = Player.EMPTY.value
@@ -70,7 +70,7 @@ class Board:
         if not (0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE):
             return False
 
-        return self.board[row, col] == Player.EMPTY.value
+        return bool(self.board[row, col] == Player.EMPTY.value)
 
     def legal_moves(self) -> Iterator[tuple[int, int]]:
         """
@@ -82,7 +82,7 @@ class Board:
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
                 if self.board[row, col] == Player.EMPTY.value:
-                    yield (row, col)
+                    yield row, col
 
     def terminal(self) -> bool:
         """
@@ -91,7 +91,7 @@ class Board:
         Returns:
             True if game is over (win or draw), False otherwise
         """
-        return self.check_winner() is not None or self.is_board_full()
+        return bool(self.check_winner() is not None or self.is_board_full())
 
     def check_winner(self) -> int | None:
         """
@@ -102,17 +102,17 @@ class Board:
         """
         for row in range(BOARD_SIZE):
             if self._check_line([(row, 0), (row, 1), (row, 2)]):
-                return self.board[row, 0]
+                return int(self.board[row, 0])
 
         for col in range(BOARD_SIZE):
             if self._check_line([(0, col), (1, col), (2, col)]):
-                return self.board[0, col]
+                return int(self.board[0, col])
 
         if self._check_line([(0, 0), (1, 1), (2, 2)]):
-            return self.board[0, 0]
+            return int(self.board[0, 0])
 
         if self._check_line([(0, 2), (1, 1), (2, 0)]):
-            return self.board[0, 2]
+            return int(self.board[0, 2])
 
         return None
 
@@ -139,7 +139,7 @@ class Board:
         Returns:
             True if board is full, False otherwise
         """
-        return np.all(self.board != Player.EMPTY.value)
+        return bool(np.all(self.board != Player.EMPTY.value))
 
     def evaluate(self) -> int:
         """

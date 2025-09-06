@@ -53,13 +53,13 @@ class AI:
 
     def _get_medium_move(self, board: Board) -> tuple[int, int]:
         """Get a move for medium difficulty (minimax with limited depth)."""
-        return self.__get_minimax_move(board, depth=Depth.MEDIUM.value)
+        return self._get_minimax_move(board, depth=Depth.MEDIUM.value)
 
     def _get_hard_move(self, board: Board) -> tuple[int, int]:
         """Get a move for hard difficulty (full minimax with alpha-beta pruning)."""
-        return self.__get_minimax_move(board, depth=Depth.HARD.value)
+        return self._get_minimax_move(board, depth=Depth.HARD.value)
 
-    def __get_minimax_move(self, board: Board, depth: int) -> tuple[int, int]:
+    def _get_minimax_move(self, board: Board, depth: int) -> tuple[int, int]:
         """
         Get the best move using minimax algorithm with specified depth.
 

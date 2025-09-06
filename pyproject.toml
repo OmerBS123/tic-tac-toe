@@ -58,5 +58,7 @@ known-first-party = ["tictactoe"]
 
 [dependency-groups]
 dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=6.2.1",
     "ruff>=0.12.12",
 ]

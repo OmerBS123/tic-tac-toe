@@ -7,6 +7,9 @@ from collections.abc import Iterator
 import numpy as np
 
 from .consts.board_consts import BOARD_SIZE, Player, Score
+from .logger import get_logger
+
+logger = get_logger()
 
 
 class Board:
@@ -16,11 +19,13 @@ class Board:
         """Initialize an empty 3x3 board."""
         self.board = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
         self.move_history: list[tuple[tuple[int, int], int]] = []
+        logger.debug("Board initialized")
 
     def reset(self) -> None:
         """Reset the board to initial empty state."""
         self.board = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
         self.move_history = []
+        logger.info("Board reset to initial state")
 
     def apply(self, move: tuple[int, int], player: int) -> bool:
         """
@@ -34,11 +39,15 @@ class Board:
             True if move was valid and applied, False otherwise
         """
         row, col = move
+        player_name = "X" if player == Player.X_PLAYER.value else "O" if player == Player.O_PLAYER.value else "Unknown"
+
         if not self.is_valid_move(move):
+            logger.warning(f"Invalid move attempted: {player_name} at ({row}, {col})")
             return False
 
         self.board[row, col] = player
         self.move_history.append((move, player))
+        logger.info(f"Move applied: {player_name} at ({row}, {col})")
         return True
 
     def undo(self, move: tuple[int, int]) -> None:
@@ -50,11 +59,13 @@ class Board:
         """
         row, col = move
         if not (0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE):
+            logger.warning(f"Invalid undo coordinates: ({row}, {col})")
             return
 
         self.board[row, col] = Player.EMPTY.value
         if self.move_history and self.move_history[-1][0] == move:
             self.move_history.pop()
+            logger.debug(f"Move undone at ({row}, {col})")
 
     def is_valid_move(self, move: tuple[int, int]) -> bool:
         """
@@ -91,7 +102,13 @@ class Board:
         Returns:
             True if game is over (win or draw), False otherwise
         """
-        return bool(self.check_winner() is not None or self.is_board_full())
+        is_terminal = bool(self.check_winner() is not None or self.is_board_full())
+        if is_terminal:
+            if self.check_winner() is not None:
+                logger.info("Game reached terminal state: Winner found")
+            else:
+                logger.info("Game reached terminal state: Draw")
+        return is_terminal
 
     def check_winner(self) -> int | None:
         """
@@ -102,17 +119,29 @@ class Board:
         """
         for row in range(BOARD_SIZE):
             if self._check_line([(row, 0), (row, 1), (row, 2)]):
-                return int(self.board[row, 0])
+                winner = int(self.board[row, 0])
+                winner_name = "X" if winner == Player.X_PLAYER.value else "O"
+                logger.info(f"Winner found: {winner_name} in row {row}")
+                return winner
 
         for col in range(BOARD_SIZE):
             if self._check_line([(0, col), (1, col), (2, col)]):
-                return int(self.board[0, col])
+                winner = int(self.board[0, col])
+                winner_name = "X" if winner == Player.X_PLAYER.value else "O"
+                logger.info(f"Winner found: {winner_name} in column {col}")
+                return winner
 
         if self._check_line([(0, 0), (1, 1), (2, 2)]):
-            return int(self.board[0, 0])
+            winner = int(self.board[0, 0])
+            winner_name = "X" if winner == Player.X_PLAYER.value else "O"
+            logger.info(f"Winner found: {winner_name} in main diagonal")
+            return winner
 
         if self._check_line([(0, 2), (1, 1), (2, 0)]):
-            return int(self.board[0, 2])
+            winner = int(self.board[0, 2])
+            winner_name = "X" if winner == Player.X_PLAYER.value else "O"
+            logger.info(f"Winner found: {winner_name} in anti-diagonal")
+            return winner
 
         return None
 

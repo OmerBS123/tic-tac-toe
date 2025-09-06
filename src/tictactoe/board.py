@@ -2,28 +2,27 @@
 Board class for tic-tac-toe game with all game logic methods.
 """
 
+from collections.abc import Iterator
+
 import numpy as np
-from typing import Iterator, Tuple, Optional
+
+from .consts.board_consts import BOARD_SIZE, Player, Score
 
 
 class Board:
     """Represents a 3x3 tic-tac-toe board."""
 
-    EMPTY = 0
-    X_PLAYER = 1
-    O_PLAYER = 2
-
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty 3x3 board."""
-        self.board = np.zeros((3, 3), dtype=int)
-        self.move_history = []  # Track moves for undo functionality
+        self.board = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
+        self.move_history: list[tuple[tuple[int, int], int]] = []
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the board to initial empty state."""
-        self.board = np.zeros((3, 3), dtype=int)
+        self.board = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
         self.move_history = []
 
-    def apply(self, move: Tuple[int, int], player: int) -> bool:
+    def apply(self, move: tuple[int, int], player: int) -> bool:
         """
         Apply a move to the board.
 
@@ -42,7 +41,7 @@ class Board:
         self.move_history.append((move, player))
         return True
 
-    def undo(self, move: Tuple[int, int]):
+    def undo(self, move: tuple[int, int]) -> None:
         """
         Undo a move on the board.
 
@@ -53,12 +52,11 @@ class Board:
         if not self.is_valid_move(move):
             return
 
-        self.board[row, col] = self.EMPTY
-        # Remove from history if it exists
+        self.board[row, col] = Player.EMPTY.value
         if self.move_history and self.move_history[-1][0] == move:
             self.move_history.pop()
 
-    def is_valid_move(self, move: Tuple[int, int]) -> bool:
+    def is_valid_move(self, move: tuple[int, int]) -> bool:
         """
         Check if a move is valid.
 
@@ -69,21 +67,21 @@ class Board:
             True if move is valid, False otherwise
         """
         row, col = move
-        if not (0 <= row < 3 and 0 <= col < 3):
+        if not (0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE):
             return False
 
-        return self.board[row, col] == self.EMPTY
+        return self.board[row, col] == Player.EMPTY.value
 
-    def legal_moves(self) -> Iterator[Tuple[int, int]]:
+    def legal_moves(self) -> Iterator[tuple[int, int]]:
         """
         Return an iterator of all legal moves.
 
         Returns:
             Iterator of (row, col) tuples for all empty positions
         """
-        for row in range(3):
-            for col in range(3):
-                if self.board[row, col] == self.EMPTY:
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if self.board[row, col] == Player.EMPTY.value:
                     yield (row, col)
 
     def terminal(self) -> bool:
@@ -95,24 +93,21 @@ class Board:
         """
         return self.check_winner() is not None or self.is_board_full()
 
-    def check_winner(self) -> Optional[int]:
+    def check_winner(self) -> int | None:
         """
         Check if there's a winner on the board.
 
         Returns:
             X_PLAYER, O_PLAYER if there's a winner, None otherwise
         """
-        # Check rows
-        for row in range(3):
+        for row in range(BOARD_SIZE):
             if self._check_line([(row, 0), (row, 1), (row, 2)]):
                 return self.board[row, 0]
 
-        # Check columns
-        for col in range(3):
+        for col in range(BOARD_SIZE):
             if self._check_line([(0, col), (1, col), (2, col)]):
                 return self.board[0, col]
 
-        # Check diagonals
         if self._check_line([(0, 0), (1, 1), (2, 2)]):
             return self.board[0, 0]
 
@@ -121,7 +116,7 @@ class Board:
 
         return None
 
-    def _check_line(self, positions: list) -> bool:
+    def _check_line(self, positions: list[tuple[int, int]]) -> bool:
         """
         Check if all positions in a line have the same non-empty value.
 
@@ -135,7 +130,7 @@ class Board:
             return False
 
         values = [self.board[row, col] for row, col in positions]
-        return values[0] != self.EMPTY and values[0] == values[1] == values[2]
+        return values[0] != Player.EMPTY.value and values[0] == values[1] == values[2]
 
     def is_board_full(self) -> bool:
         """
@@ -144,7 +139,7 @@ class Board:
         Returns:
             True if board is full, False otherwise
         """
-        return np.all(self.board != self.EMPTY)
+        return np.all(self.board != Player.EMPTY.value)
 
     def evaluate(self) -> int:
         """
@@ -156,28 +151,23 @@ class Board:
         winner = self.check_winner()
 
         match winner:
-            case self.O_PLAYER:
-                return 10
-            case self.X_PLAYER:
-                return -10
+            case Player.O_PLAYER.value:
+                return Score.WIN.value
+            case Player.X_PLAYER.value:
+                return Score.LOSE.value
             case None:
                 if self.is_board_full():
-                    return 0
+                    return Score.DRAW.value
 
-        # Evaluate based on potential winning lines
         score = 0
 
-        # Check all possible lines (rows, columns, diagonals)
         lines = [
-            # Rows
             [(0, 0), (0, 1), (0, 2)],
             [(1, 0), (1, 1), (1, 2)],
             [(2, 0), (2, 1), (2, 2)],
-            # Columns
             [(0, 0), (1, 0), (2, 0)],
             [(0, 1), (1, 1), (2, 1)],
             [(0, 2), (1, 2), (2, 2)],
-            # Diagonals
             [(0, 0), (1, 1), (2, 2)],
             [(0, 2), (1, 1), (2, 0)],
         ]
@@ -188,7 +178,7 @@ class Board:
 
         return score
 
-    def _evaluate_line(self, line: list) -> int:
+    def _evaluate_line(self, line: list[tuple[int, int]]) -> int:
         """
         Evaluate a specific line on the board.
 
@@ -202,18 +192,16 @@ class Board:
         x_count = 0
 
         for row, col in line:
-            if self.board[row, col] == self.O_PLAYER:
+            if self.board[row, col] == Player.O_PLAYER.value:
                 o_count += 1
-            elif self.board[row, col] == self.X_PLAYER:
+            elif self.board[row, col] == Player.X_PLAYER.value:
                 x_count += 1
 
-        # If both players have pieces in this line, it's not useful
         if o_count > 0 and x_count > 0:
             return 0
 
-        # Score based on how many pieces are in the line
         if o_count > 0:
-            return o_count * o_count  # Exponential scoring
+            return o_count * o_count
         elif x_count > 0:
             return -x_count * x_count
 
@@ -230,7 +218,7 @@ class Board:
 
     def __str__(self) -> str:
         """String representation of the board for debugging."""
-        symbols = {self.EMPTY: " ", self.X_PLAYER: "X", self.O_PLAYER: "O"}
+        symbols = {Player.EMPTY.value: " ", Player.X_PLAYER.value: "X", Player.O_PLAYER.value: "O"}
         lines = []
         for row in self.board:
             lines.append(" | ".join(symbols[cell] for cell in row))

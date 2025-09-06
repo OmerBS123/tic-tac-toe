@@ -1,27 +1,34 @@
 """
 AI implementation using minimax algorithm with alpha-beta pruning.
+
+Difficulty Levels:
+- EASY: Purely random moves for beginners
+- MEDIUM: Minimax with limited depth (3 levels) for intermediate players
+- HARD: Full minimax with alpha-beta pruning for advanced players
 """
 
 import random
-from typing import Tuple
+
 from .board import Board
+from .consts.ai_consts import INFINITY, NEGATIVE_INFINITY, Depth, Difficulty
+from .consts.board_consts import Player
 
 
 class AI:
     """AI opponent for tic-tac-toe using minimax algorithm."""
 
-    def __init__(self, difficulty: str = "medium"):
+    def __init__(self, difficulty: Difficulty = Difficulty.MEDIUM) -> None:
         """
         Initialize the AI with specified difficulty.
 
         Args:
-            difficulty: AI difficulty level ("easy", "medium", "hard")
+            difficulty: AI difficulty level
         """
         self.difficulty = difficulty
-        self.MAX_PLAYER = Board.O_PLAYER  # AI always plays as O
-        self.MIN_PLAYER = Board.X_PLAYER  # Human plays as X
+        self.MAX_PLAYER = Player.O_PLAYER.value
+        self.MIN_PLAYER = Player.X_PLAYER.value
 
-    def get_move(self, board: Board) -> Tuple[int, int]:
+    def get_move(self, board: Board) -> tuple[int, int]:
         """
         Get the best move for the AI based on current board state.
 
@@ -31,27 +38,28 @@ class AI:
         Returns:
             Tuple of (row, col) for the best move
         """
-        if self.difficulty == "easy":
+        if self.difficulty == Difficulty.EASY:
             return self._get_easy_move(board)
-        elif self.difficulty == "medium":
+        elif self.difficulty == Difficulty.MEDIUM:
             return self._get_medium_move(board)
-        else:  # hard
+        else:
             return self._get_hard_move(board)
 
-    def _get_easy_move(self, board: Board) -> Tuple[int, int]:
+    @staticmethod
+    def _get_easy_move(board: Board) -> tuple[int, int]:
         """Get a move for easy difficulty (purely random)."""
         legal_moves = list(board.legal_moves())
         return random.choice(legal_moves)
 
-    def _get_medium_move(self, board: Board) -> Tuple[int, int]:
+    def _get_medium_move(self, board: Board) -> tuple[int, int]:
         """Get a move for medium difficulty (minimax with limited depth)."""
-        return self.__get_minimax_move(board, depth=3)
+        return self.__get_minimax_move(board, depth=Depth.MEDIUM.value)
 
-    def _get_hard_move(self, board: Board) -> Tuple[int, int]:
+    def _get_hard_move(self, board: Board) -> tuple[int, int]:
         """Get a move for hard difficulty (full minimax with alpha-beta pruning)."""
-        return self.__get_minimax_move(board, depth=9)
+        return self.__get_minimax_move(board, depth=Depth.HARD.value)
 
-    def __get_minimax_move(self, board: Board, depth: int) -> Tuple[int, int]:
+    def __get_minimax_move(self, board: Board, depth: int) -> tuple[int, int]:
         """
         Get the best move using minimax algorithm with specified depth.
 
@@ -64,11 +72,11 @@ class AI:
         """
         legal_moves = list(board.legal_moves())
         best_move = legal_moves[0]
-        best_score = float("-inf")
+        best_score = NEGATIVE_INFINITY
 
         for move in legal_moves:
             board.apply(move, self.MAX_PLAYER)
-            score = self.minimax(board, depth, False, float("-inf"), float("inf"))
+            score = self.minimax(board, depth, False, NEGATIVE_INFINITY, INFINITY)
             board.undo(move)
 
             if score > best_score:
@@ -95,24 +103,24 @@ class AI:
             return board.evaluate()
 
         if is_max:
-            best = float("-inf")
+            best = NEGATIVE_INFINITY
             for move in board.legal_moves():
                 board.apply(move, self.MAX_PLAYER)
                 val = self.minimax(board, depth - 1, False, alpha, beta)
                 board.undo(move)
                 best = max(best, val)
                 alpha = max(alpha, best)
-                if alpha >= beta:  # prune
+                if alpha >= beta:
                     break
             return best
         else:
-            best = float("inf")
+            best = INFINITY
             for move in board.legal_moves():
                 board.apply(move, self.MIN_PLAYER)
                 val = self.minimax(board, depth - 1, True, alpha, beta)
                 board.undo(move)
                 best = min(best, val)
                 beta = min(beta, best)
-                if alpha >= beta:  # prune
+                if alpha >= beta:
                     break
             return best

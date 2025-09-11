@@ -9,7 +9,7 @@ from tictactoe.consts.ai_consts import Difficulty
 from tictactoe.consts.scene_consts import SceneTransition
 from tictactoe.infra.logger import get_logger
 from tictactoe.infra.storage import Storage
-from tictactoe.ui.layout import get_initial_window_size
+from tictactoe.screens.window_manager import get_initial_window_size, save_window_size
 
 logger = get_logger()
 
@@ -164,6 +164,9 @@ class TicTacToeApp:
             if self.scene_manager:
                 self.scene_manager.on_resize(width, height)
 
+            # Save the new window size for next session
+            save_window_size(width, height)
+
             logger.info(f"Window resized to {width}x{height}")
 
     def _toggle_fullscreen(self) -> None:
@@ -181,6 +184,9 @@ class TicTacToeApp:
 
         if self.scene_manager:
             self.scene_manager.on_resize(self.width, self.height)
+
+        # Save the new window size for next session
+        save_window_size(self.width, self.height)
 
         logger.info(
             f"Toggled fullscreen: {not is_fullscreen}, size: {self.width}x{self.height}"

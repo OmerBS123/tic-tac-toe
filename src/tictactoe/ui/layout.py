@@ -5,10 +5,7 @@ This module provides the single source of truth for all responsive geometry,
 ensuring consistent layout across all scenes regardless of window size.
 """
 
-import json
 from dataclasses import dataclass
-from pathlib import Path
-from typing import TextIO
 
 import pygame
 
@@ -93,51 +90,6 @@ def compute_layout(width: int, height: int) -> Layout:
         menu_width=menu_width,
         menu_height=menu_height,
     )
-
-
-def get_initial_window_size() -> tuple[int, int]:
-    """
-    Get initial window size based on desktop percentage.
-
-    Returns:
-        Tuple of (width, height) for initial window
-    """
-    try:
-        window_file = Path("window.json")
-        if window_file.exists():
-            with open(window_file) as f:
-                data = json.load(f)
-                width = int(clamp(data["w"], 900, 1600))
-                height = int(clamp(data["h"], 900, 1600))
-                return width, height
-    except Exception:
-        pass
-
-    try:
-        pygame.init()
-        desktop_info = pygame.display.Info()
-        width = int(clamp(desktop_info.current_w * 0.8, 900, 1600))
-        height = int(clamp(desktop_info.current_h * 0.8, 900, 1600))
-        return width, height
-    except Exception:
-        # Ultimate fallback
-        return 1000, 1100
-
-
-def save_window_size(width: int, height: int) -> None:
-    """
-    Save current window size for next launch.
-
-    Args:
-        width: Window width
-        height: Window height
-    """
-    try:
-        with open("window.json", "w") as f:
-            f: TextIO
-            json.dump({"w": width, "h": height}, f)
-    except Exception:
-        pass  # Ignore save errors
 
 
 def make_fonts(layout: Layout) -> dict[str, pygame.font.Font]:

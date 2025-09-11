@@ -6,10 +6,10 @@ import pygame
 from typing import Optional, Callable
 
 from ..infra.storage import Storage
-from ..scene import Scene
-from ..layout import compute_layout, make_fonts
+from ..app.scene import Scene
+from ..ui.layout import compute_layout, make_fonts
 from ..consts.ai_consts import Difficulty
-from ..logger import get_logger
+from ..infra.logger import get_logger
 
 logger = get_logger()
 

@@ -5,10 +5,10 @@ Match history scene for displaying recent games using pygame.
 import pygame
 
 from ..infra.storage import Storage
-from ..scene import Scene
-from ..layout import Layout, compute_layout, make_fonts
+from ..app.scene import Scene
+from ..ui.layout import Layout, compute_layout, make_fonts
 from ..domain.services.history_service import HistoryService
-from ..logger import get_logger
+from ..infra.logger import get_logger
 
 logger = get_logger()
 

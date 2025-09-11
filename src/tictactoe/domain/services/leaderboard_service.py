@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 from ..models import PlayerStats, LeaderboardRow, LeaderboardData
 from ...infra.storage import Storage
-from ...logger import get_logger
+from ...infra.logger import get_logger
 
 logger = get_logger()
 

@@ -1,27 +1,15 @@
 """
-Example integration of menu.py with app.py state machine.
-
-This shows how the menu callbacks would integrate with the main application.
+Main application orchestrator for tic-tac-toe game.
 """
-
-from enum import Enum
 
 import pygame
 
-from .menu import MenuCallbacks, create_main_menu, get_menu_data, set_menu_data
-from .ui.widgets import GameUI
-from .infra.storage import Storage
-from .layout import get_initial_window_size
-from .logger import get_logger
+from tictactoe.app.scene_manager import SceneManager, MenuCallbacks
+from tictactoe.infra.storage import Storage
+from tictactoe.ui.layout import get_initial_window_size
+from tictactoe.infra.logger import get_logger
 
 logger = get_logger()
-
-
-class AppState(Enum):
-    """Application states."""
-
-    MENU = "menu"
-    GAME = "game"
 
 
 class TicTacToeApp:
@@ -32,17 +20,14 @@ class TicTacToeApp:
         Initialize the application.
 
         Args:
-            width: Window width (if None, uses dynamic sizing)
-            height: Window height (if None, uses dynamic sizing)
+            width: Window width (defaults to computed size)
+            height: Window height (defaults to computed size)
         """
-        # Get initial window size
         if width is None or height is None:
             width, height = get_initial_window_size()
 
         self.width = width
         self.height = height
-        self.state = AppState.MENU
-        self.windowed_size = (width, height)  # Store for fullscreen toggle
 
         # Initialize pygame
         pygame.init()
@@ -51,9 +36,7 @@ class TicTacToeApp:
 
         # Initialize components
         self.storage = Storage()
-        self.game_ui = GameUI(width, height)
         self.scene_manager = None
-        self.menu_data = {}
 
         # Create scene manager with callbacks
         self._create_scene_manager()
@@ -71,7 +54,8 @@ class TicTacToeApp:
             quit_game=self._quit_game,
         )
 
-        self.scene_manager = create_main_menu(self.screen, callbacks)
+        self.scene_manager = SceneManager(self.storage, self.width, self.height)
+        self.scene_manager.set_callbacks(callbacks)
         logger.info("Scene manager created")
 
     def _start_pvp_game(self, player_x: str, player_o: str) -> None:
@@ -83,20 +67,8 @@ class TicTacToeApp:
             player_o: Player O name
         """
         logger.info(f"Starting PvP game: {player_x} vs {player_o}")
-
-        # Store menu data
-        if self.scene_manager:
-            self.menu_data = get_menu_data(self.scene_manager)
-
-        # Switch to game state
-        self.state = AppState.GAME
-
-        # Configure game UI for PvP
-        self.game_ui.set_move_callback(self._on_game_move)
-        self.game_ui.set_game_over_callback(self._on_game_over)
-
-        # Reset game state
-        self.game_ui._reset_game()
+        # TODO: Implement game logic
+        # For now, just log the game start
 
     def _start_pvai_game(self, player_name: str, difficulty: str) -> None:
         """
@@ -107,20 +79,8 @@ class TicTacToeApp:
             difficulty: AI difficulty level
         """
         logger.info(f"Starting PvAI game: {player_name} vs AI ({difficulty})")
-
-        # Store menu data
-        if self.scene_manager:
-            self.menu_data = get_menu_data(self.scene_manager)
-
-        # Switch to game state
-        self.state = AppState.GAME
-
-        # Configure game UI for PvAI
-        self.game_ui.set_move_callback(self._on_game_move)
-        self.game_ui.set_game_over_callback(self._on_game_over)
-
-        # Reset game state
-        self.game_ui._reset_game()
+        # TODO: Implement game logic
+        # For now, just log the game start
 
     def _show_leaderboard(self) -> None:
         """Show leaderboard screen."""
@@ -140,36 +100,7 @@ class TicTacToeApp:
     def _quit_game(self) -> None:
         """Quit the application."""
         logger.info("Quitting game")
-        pygame.quit()
-        exit()
-
-    def _on_game_move(self, move: tuple[int, int], player: int) -> None:
-        """
-        Handle game move.
-
-        Args:
-            move: Move position (row, col)
-            player: Player making the move
-        """
-        logger.debug(f"Move made: {player} at {move}")
-        # TODO: Handle AI moves if in PvAI mode
-
-    def _on_game_over(self, winner: int | None) -> None:
-        """
-        Handle game over.
-
-        Args:
-            winner: Winner player or None for draw
-        """
-        logger.info(f"Game over. Winner: {winner}")
-
-        # TODO: Save match result to storage
-        # TODO: Show game over screen with option to return to menu
-
-        # Return to menu
-        self.state = AppState.MENU
-        if self.scene_manager:
-            set_menu_data(self.scene_manager, self.menu_data)
+        # Don't call pygame.quit() here - let the main loop handle it
 
     def run(self) -> None:
         """Main application loop."""
@@ -193,24 +124,15 @@ class TicTacToeApp:
             if not running:
                 break
 
-            # Update based on current state
-            if self.state == AppState.MENU:
-                # Handle scene manager events
-                for event in events:
-                    result = self.scene_manager.handle_event(event)
-                    if result == "game":
-                        self.state = AppState.GAME
-                        break
-                    elif result == "quit":
-                        running = False
-                        break
+            # Handle scene manager events
+            for event in events:
+                result = self.scene_manager.handle_event(event)
+                if result == "quit":
+                    running = False
+                    break
 
-                # Draw current scene
-                self.scene_manager.draw(self.screen)
-
-            elif self.state == AppState.GAME:
-                self.game_ui.handle_events()
-                self.game_ui.render()
+            # Draw current scene
+            self.scene_manager.draw(self.screen)
 
             pygame.display.flip()
             clock.tick(60)  # 60 FPS
@@ -228,8 +150,6 @@ class TicTacToeApp:
             # Update scene manager
             if self.scene_manager:
                 self.scene_manager.on_resize(width, height)
-            if hasattr(self, "game_ui"):
-                self.game_ui.on_resize(width, height)
 
             logger.info(f"Window resized to {width}x{height}")
 
@@ -239,20 +159,16 @@ class TicTacToeApp:
         is_fullscreen = bool(flags & pygame.FULLSCREEN)
 
         if is_fullscreen:
-            # Return to windowed mode
-            self.screen = pygame.display.set_mode(self.windowed_size, pygame.RESIZABLE)
-            self.width, self.height = self.windowed_size
+            # Exit fullscreen mode
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         else:
             # Enter fullscreen mode
-            self.windowed_size = (self.width, self.height)
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             self.width, self.height = self.screen.get_size()
 
         # Update scene manager
         if self.scene_manager:
             self.scene_manager.on_resize(self.width, self.height)
-        if hasattr(self, "game_ui"):
-            self.game_ui.on_resize(self.width, self.height)
 
         logger.info(f"Toggled fullscreen: {not is_fullscreen}, size: {self.width}x{self.height}")
 

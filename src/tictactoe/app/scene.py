@@ -9,7 +9,7 @@ from typing import Optional
 
 import pygame
 
-from .layout import Layout
+from ..ui.layout import Layout
 
 
 class Scene(ABC):

@@ -7,12 +7,12 @@ from typing import Any, Dict, Optional
 
 import pygame
 
-from .infra.storage import Storage
-from .screens.main_menu_scene import MainMenuScene
-from .screens.leaderboard_scene import LeaderboardScene
-from .screens.history_scene import MatchHistoryScene
-from .screens.reset_scene import ResetScene
-from .logger import get_logger
+from tictactoe.infra.storage import Storage
+from tictactoe.screens.main_menu_scene import MainMenuScene
+from tictactoe.screens.leaderboard_scene import LeaderboardScene
+from tictactoe.screens.history_scene import MatchHistoryScene
+from tictactoe.screens.reset_scene import ResetScene
+from tictactoe.infra.logger import get_logger
 
 logger = get_logger()
 

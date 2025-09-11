@@ -7,7 +7,7 @@ while keeping dummy callbacks for game logic to avoid side effects.
 
 import pygame
 
-from src.tictactoe.menu import MenuCallbacks, create_main_menu, SceneManager
+from src.tictactoe.app.scene_manager import MenuCallbacks, create_main_menu, SceneManager
 from src.tictactoe.infra.storage import Storage
 from src.tictactoe.screens.leaderboard_scene import LeaderboardScene
 from src.tictactoe.screens.history_scene import MatchHistoryScene
@@ -35,7 +35,7 @@ class MenuTestApp:
         pygame.init()
 
         # Use dynamic window sizing
-        from src.tictactoe.layout import get_initial_window_size
+        from src.tictactoe.ui.layout import get_initial_window_size
 
         width, height = get_initial_window_size()
 

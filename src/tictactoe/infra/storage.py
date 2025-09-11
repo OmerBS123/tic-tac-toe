@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..domain.models import PlayerStats, MatchRecord
-from ..logger import get_logger
+from .logger import get_logger
 
 logger = get_logger()
 

@@ -8,7 +8,7 @@ import pygame
 
 from ..domain.board import Board
 from ..consts.board_consts import Player
-from ..logger import get_logger
+from ..infra.logger import get_logger
 from .theme import Colors, FontSizes
 
 logger = get_logger()
@@ -396,9 +396,9 @@ class GameUI:
         self.width = width
         self.height = height
         self.cell_size = min(width, height) // 3
-        
+
         # Update fonts
         self.font = pygame.font.Font(None, self.cell_size // 2)
         self.status_font = pygame.font.Font(None, self.cell_size // 3)
-        
+
         logger.info(f"GameUI resized to {width}x{height}")

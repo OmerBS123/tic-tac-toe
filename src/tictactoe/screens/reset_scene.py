@@ -5,9 +5,9 @@ Reset confirmation scene for confirming data reset using pygame.
 import pygame
 
 from ..infra.storage import Storage
-from ..scene import Scene
-from ..layout import compute_layout, make_fonts
-from ..logger import get_logger
+from ..app.scene import Scene
+from ..ui.layout import compute_layout, make_fonts
+from ..infra.logger import get_logger
 
 logger = get_logger()
 

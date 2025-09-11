@@ -5,10 +5,10 @@ Leaderboard scene for displaying player statistics using pygame.
 import pygame
 
 from ..infra.storage import Storage
-from ..scene import Scene
-from ..layout import Layout, compute_layout, make_fonts
+from ..app.scene import Scene
+from ..ui.layout import Layout, compute_layout, make_fonts
 from ..domain.services.leaderboard_service import LeaderboardService
-from ..logger import get_logger
+from ..infra.logger import get_logger
 
 logger = get_logger()
 

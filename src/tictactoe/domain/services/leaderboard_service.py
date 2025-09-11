@@ -2,11 +2,9 @@
 Leaderboard screen logic for displaying player statistics.
 """
 
-from typing import NamedTuple
-
-from ..models import PlayerStats, LeaderboardRow, LeaderboardData
-from ...infra.storage import Storage
 from ...infra.logger import get_logger
+from ...infra.storage import Storage
+from ..models import LeaderboardData, LeaderboardRow, PlayerStats
 
 logger = get_logger()
 

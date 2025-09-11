@@ -4,11 +4,12 @@ Match history scene for displaying recent games using pygame.
 
 import pygame
 
-from ..infra.storage import Storage
 from ..app.scene import Scene
-from ..ui.layout import Layout, compute_layout, make_fonts
+from ..consts.scene_consts import SceneTransition
 from ..domain.services.history_service import HistoryService
 from ..infra.logger import get_logger
+from ..infra.storage import Storage
+from ..ui.layout import compute_layout, make_fonts
 
 logger = get_logger()
 
@@ -58,17 +59,20 @@ class MatchHistoryScene(Scene):
         self.header_height = max(35, int(self.layout.font_ui * 1.5))
         self.margin_x = self.layout.safe_margin
 
-    def handle_event(self, event: pygame.event.Event) -> None:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events.
 
         Args:
             event: Pygame event
+
+        Returns:
+            String indicating scene transition (SceneTransition.MENU) or None if no action needed
         """
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 logger.info("ESC pressed - returning to menu")
-                return "menu"
+                return SceneTransition.MENU
             elif event.key in (pygame.K_DOWN, pygame.K_PAGEDOWN):
                 self._scroll_down()
             elif event.key in (pygame.K_UP, pygame.K_PAGEUP):
@@ -78,7 +82,7 @@ class MatchHistoryScene(Scene):
                 mouse_x, mouse_y = event.pos
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
-                    return "menu"
+                    return SceneTransition.MENU
         return None
 
     def _scroll_down(self) -> None:
@@ -153,7 +157,7 @@ class MatchHistoryScene(Scene):
         y += self.header_height + 10
 
         # Draw visible rows (with scrolling)
-        visible_rows = data.rows[self.scroll_offset : self.scroll_offset + self.rows_per_page]
+        visible_rows = data.rows[self.scroll_offset: self.scroll_offset + self.rows_per_page]
         for row in visible_rows:
             self._draw_history_row(surface, row, col_x_positions, y)
             y += self.row_height
@@ -216,9 +220,9 @@ class MatchHistoryScene(Scene):
             RGB color tuple
         """
         if result == "Draw":
-            return (200, 200, 200)  # Gray for draw
+            return 200, 200, 200
         else:
-            return (100, 200, 255)  # Blue for winner
+            return 100, 200, 255
 
     def _draw_scroll_indicator(self, surface: pygame.Surface, total_rows: int) -> None:
         """

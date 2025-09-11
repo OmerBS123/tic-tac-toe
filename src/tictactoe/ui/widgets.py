@@ -6,10 +6,10 @@ from collections.abc import Callable
 
 import pygame
 
-from ..domain.board import Board
 from ..consts.board_consts import Player
+from ..domain.board import Board
 from ..infra.logger import get_logger
-from .theme import Colors, FontSizes
+from .theme import Colors
 
 logger = get_logger()
 
@@ -17,41 +17,57 @@ logger = get_logger()
 class GameUI:
     """Game UI widget for pygame-based tic-tac-toe board."""
 
-    def __init__(self, width: int = 600, height: int = 700) -> None:
+    def __init__(self, board: Board, layout, fonts) -> None:
         """
         Initialize the game UI.
 
         Args:
-            width: Window width in pixels
-            height: Window height in pixels
+            board: Board instance
+            layout: Layout instance for responsive sizing
+            fonts: Font dictionary
         """
-        self.width = width
-        self.height = height
+        self.board = board
+        self.layout = layout
+        self.fonts = fonts
+
+        # Calculate board dimensions
         self.board_size = 3
-        self.cell_size = min(width, height) // 3
+        self.board_width = min(self.layout.width, self.layout.height) * 0.6
+        self.board_height = self.board_width
+        self.cell_size = self.board_width // self.board_size
 
-        # Initialize pygame
-        pygame.init()
-        self.screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Tic Tac Toe")
-        self.clock = pygame.time.Clock()
+        # Board position (centered)
+        self.board_x = (self.layout.width - self.board_width) // 2
+        self.board_y = (self.layout.height - self.board_height) // 2
 
-        self.font = pygame.font.Font(None, self.cell_size // 2)
-        self.status_font = pygame.font.Font(None, self.cell_size // 3)
+        # Back button
+        self.back_button_width = 100
+        self.back_button_height = 50
+        self.back_button_x = 20
+        self.back_button_y = self.layout.height - 70
 
-        # Game state
-        self.board = Board()
+        # Game state attributes
+        self.screen = None  # Will be set by external code
         self.running = True
         self.current_player = Player.X_PLAYER.value
         self.game_over = False
         self.winner = None
-        self.hovered_cell: tuple[int, int] | None = None
+        self.hovered_cell = None
 
-        # Callbacks
-        self.on_move_callback: Callable[[tuple[int, int], int], None] | None = None
-        self.on_game_over_callback: Callable[[int | None], None] | None = None
+        # Layout attributes
+        self.width = layout.width
+        self.height = layout.height
+
+        # Font attributes
+        self.font = fonts.get("ui", pygame.font.Font(None, 24))
+        self.status_font = fonts.get("small", pygame.font.Font(None, 18))
+
+        # Pygame clock for FPS control
+        self.clock = pygame.time.Clock()
 
         logger.info("GameUI initialized")
+        self.on_move_callback: Callable[[tuple[int, int], int], None] | None = None
+        self.on_game_over_callback: Callable[[int | None], None] | None = None
 
     def set_move_callback(self, callback: Callable[[tuple[int, int], int], None]) -> None:
         """
@@ -232,17 +248,18 @@ class GameUI:
         center_y = row * self.cell_size + self.cell_size // 2
         radius = self.cell_size // 3
 
-        if player == Player.X_PLAYER.value:
-            # Draw X
-            color = Colors.X_COLOR
-            # Draw two diagonal lines
-            pygame.draw.line(self.screen, color, (center_x - radius, center_y - radius), (center_x + radius, center_y + radius), 5)
-            pygame.draw.line(self.screen, color, (center_x + radius, center_y - radius), (center_x - radius, center_y + radius), 5)
+        match player:
+            case Player.X_PLAYER.value:
+                # Draw X
+                color = Colors.X_COLOR
+                # Draw two diagonal lines
+                pygame.draw.line(self.screen, color, (center_x - radius, center_y - radius), (center_x + radius, center_y + radius), 5)
+                pygame.draw.line(self.screen, color, (center_x + radius, center_y - radius), (center_x - radius, center_y + radius), 5)
 
-        elif player == Player.O_PLAYER.value:
-            # Draw O
-            color = Colors.O_COLOR
-            pygame.draw.circle(self.screen, color, (center_x, center_y), radius, 5)
+            case Player.O_PLAYER.value:
+                # Draw O
+                color = Colors.O_COLOR
+                pygame.draw.circle(self.screen, color, (center_x, center_y), radius, 5)
 
     def _draw_hover(self) -> None:
         """Draw hover effect on valid moves."""
@@ -402,3 +419,40 @@ class GameUI:
         self.status_font = pygame.font.Font(None, self.cell_size // 3)
 
         logger.info(f"GameUI resized to {width}x{height}")
+
+    def get_cell_from_mouse(self, mouse_x: int, mouse_y: int) -> tuple[int, int] | None:
+        """
+        Get cell coordinates from mouse position.
+
+        Args:
+            mouse_x: Mouse X position
+            mouse_y: Mouse Y position
+
+        Returns:
+            Tuple of (row, col) or None if outside board
+        """
+        # Check if mouse is within board bounds
+        if mouse_x < self.board_x or mouse_x > self.board_x + self.board_width or mouse_y < self.board_y or mouse_y > self.board_y + self.board_height:
+            return None
+
+        # Calculate cell coordinates
+        col = int((mouse_x - self.board_x) // self.cell_size)
+        row = int((mouse_y - self.board_y) // self.cell_size)
+
+        # Ensure coordinates are within bounds
+        if 0 <= row < self.board_size and 0 <= col < self.board_size:
+            return row, col
+        return None
+
+    def is_back_button_clicked(self, mouse_x: int, mouse_y: int) -> bool:
+        """
+        Check if the back button was clicked.
+
+        Args:
+            mouse_x: Mouse X position
+            mouse_y: Mouse Y position
+
+        Returns:
+            True if back button was clicked
+        """
+        return self.back_button_x <= mouse_x <= self.back_button_x + self.back_button_width and self.back_button_y <= mouse_y <= self.back_button_y + self.back_button_height

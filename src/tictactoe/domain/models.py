@@ -3,7 +3,7 @@ Domain models for tic-tac-toe game.
 """
 
 from datetime import datetime
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 
 class PlayerStats(NamedTuple):
@@ -27,7 +27,7 @@ class MatchRecord(NamedTuple):
     player_o_name: str
     result: str
     mode: str
-    ai_level: Optional[str]
+    ai_level: str | None
 
 
 class LeaderboardRow(NamedTuple):
@@ -64,7 +64,7 @@ class HistoryRow(NamedTuple):
     player_o_name: str
     result: str
     mode: str
-    ai_level: Optional[str]
+    ai_level: str | None
     ai_level_display: str
 
 
@@ -75,7 +75,7 @@ class HistoryData(NamedTuple):
     headers: list[str]
     rows: list[HistoryRow]
     total_matches: int
-    filter_applied: Optional[str]
+    filter_applied: str | None
 
 
 class GameSettings(NamedTuple):
@@ -90,9 +90,9 @@ class GameSettings(NamedTuple):
 class GameResult(NamedTuple):
     """Result of a completed game."""
 
-    winner: Optional[int]  # 0 for X, 1 for O, None for draw
+    winner: int | None  # 0 for X, 1 for O, None for draw
     player_x_name: str
     player_o_name: str
     mode: str
-    ai_level: Optional[str]
+    ai_level: str | None
     played_at: datetime

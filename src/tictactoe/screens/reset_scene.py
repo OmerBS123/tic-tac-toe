@@ -4,10 +4,11 @@ Reset confirmation scene for confirming data reset using pygame.
 
 import pygame
 
-from ..infra.storage import Storage
 from ..app.scene import Scene
-from ..ui.layout import compute_layout, make_fonts
+from ..consts.scene_consts import SceneTransition
 from ..infra.logger import get_logger
+from ..infra.storage import Storage
+from ..ui.layout import compute_layout, make_fonts
 
 logger = get_logger()
 
@@ -53,29 +54,32 @@ class ResetScene(Scene):
         self.button_height = 60
         self.button_spacing = 30
 
-    def handle_event(self, event: pygame.event.Event) -> None:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events.
 
         Args:
             event: Pygame event
+
+        Returns:
+            String indicating scene transition (SceneTransition.MENU, SceneTransition.RESET_CONFIRMED) or None if no action needed
         """
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 logger.info("ESC pressed - returning to menu")
-                return "menu"
+                return SceneTransition.MENU
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 mouse_x, mouse_y = event.pos
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
-                    return "menu"
+                    return SceneTransition.MENU
                 elif self._is_yes_button_clicked(mouse_x, mouse_y):
                     logger.info("Yes button clicked - executing reset")
-                    return "reset_confirmed"
+                    return SceneTransition.RESET_CONFIRMED
                 elif self._is_no_button_clicked(mouse_x, mouse_y):
                     logger.info("No button clicked - returning to menu")
-                    return "menu"
+                    return SceneTransition.MENU
         return None
 
     def draw(self, surface: pygame.Surface) -> None:

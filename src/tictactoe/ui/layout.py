@@ -8,7 +8,7 @@ ensuring consistent layout across all scenes regardless of window size.
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import TextIO
 
 import pygame
 
@@ -108,7 +108,7 @@ def compute_layout(width: int, height: int) -> Layout:
     )
 
 
-def get_initial_window_size() -> Tuple[int, int]:
+def get_initial_window_size() -> tuple[int, int]:
     """
     Get initial window size based on desktop percentage.
 
@@ -119,7 +119,7 @@ def get_initial_window_size() -> Tuple[int, int]:
         # Try to restore last window size
         window_file = Path("window.json")
         if window_file.exists():
-            with open(window_file, "r") as f:
+            with open(window_file) as f:
                 data = json.load(f)
                 width = int(clamp(data["w"], 900, 1600))
                 height = int(clamp(data["h"], 900, 1600))
@@ -149,12 +149,13 @@ def save_window_size(width: int, height: int) -> None:
     """
     try:
         with open("window.json", "w") as f:
+            f: TextIO
             json.dump({"w": width, "h": height}, f)
     except Exception:
         pass  # Ignore save errors
 
 
-def make_fonts(layout: Layout) -> Dict[str, pygame.font.Font]:
+def make_fonts(layout: Layout) -> dict[str, pygame.font.Font]:
     """
     Create font objects based on layout configuration.
 
@@ -172,7 +173,7 @@ def make_fonts(layout: Layout) -> Dict[str, pygame.font.Font]:
     }
 
 
-def get_cell_from_mouse(mouse_x: int, mouse_y: int, layout: Layout) -> Tuple[int, int]:
+def get_cell_from_mouse(mouse_x: int, mouse_y: int, layout: Layout) -> tuple[int, int]:
     """
     Convert mouse coordinates to grid cell coordinates.
 

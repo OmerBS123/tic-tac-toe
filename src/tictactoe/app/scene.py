@@ -5,7 +5,6 @@ This provides a common interface for scene management and dynamic resizing.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import pygame
 
@@ -25,11 +24,11 @@ class Scene(ABC):
         """
         self.width = width
         self.height = height
-        self.layout: Optional[Layout] = None
+        self.layout: Layout | None = None
         self._last_size = (width, height)
 
     @abstractmethod
-    def handle_event(self, event: pygame.event.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events.
 

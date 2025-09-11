@@ -9,10 +9,10 @@ Difficulty Levels:
 
 import random
 
+from ..consts.ai_consts import INFINITY, NEGATIVE_INFINITY, Depth, Difficulty
+from ..consts.board_consts import Player
+from ..infra.logger import get_logger
 from .board import Board
-from .consts.ai_consts import INFINITY, NEGATIVE_INFINITY, Depth, Difficulty
-from .consts.board_consts import Player
-from .logger import get_logger
 
 logger = get_logger()
 

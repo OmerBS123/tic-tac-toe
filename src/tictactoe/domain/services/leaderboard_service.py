@@ -4,37 +4,14 @@ Leaderboard screen logic for displaying player statistics.
 
 from typing import NamedTuple
 
-from ..storage import Storage, PlayerStats
-from ..logger import get_logger
+from ..models import PlayerStats, LeaderboardRow, LeaderboardData
+from ...infra.storage import Storage
+from ...logger import get_logger
 
 logger = get_logger()
 
 
-class LeaderboardRow(NamedTuple):
-    """Single leaderboard row data for pygame rendering."""
-
-    rank: int
-    medal: str
-    name: str
-    total_wins: int
-    pvp_wins: int
-    ai_easy_wins: int
-    ai_medium_wins: int
-    ai_hard_wins: int
-    win_percentage: float
-    total_games: int
-
-
-class LeaderboardData(NamedTuple):
-    """Complete leaderboard data for pygame rendering."""
-
-    title: str
-    headers: list[str]
-    rows: list[LeaderboardRow]
-    total_players: int
-
-
-class LeaderboardManager:
+class LeaderboardService:
     """Manager for leaderboard functionality."""
 
     def __init__(self, storage: Storage) -> None:
@@ -73,7 +50,7 @@ class LeaderboardManager:
         """
         leaderboard = self.storage.leaderboard(limit)
 
-        medals = ["🥇", "🥈", "🥉"]
+        medals = ["1st", "2nd", "3rd"]  # Use text instead of emojis
         rows = []
 
         for i, player in enumerate(leaderboard):

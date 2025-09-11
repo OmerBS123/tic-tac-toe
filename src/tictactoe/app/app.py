@@ -112,39 +112,58 @@ class TicTacToeApp:
     def run(self) -> None:
         """Main application loop."""
         logger.info("Starting application loop")
+        logger.debug("App.run START")
+
         clock = pygame.time.Clock()
         running = True
+        frame_count = 0
 
         while running:
+            frame_count += 1
+            logger.debug(f"App.run - frame {frame_count}")
+
             events = pygame.event.get()
+            logger.debug(f"App.run - got {len(events)} events")
 
             # Handle events
             for event in events:
+                logger.debug(f"App.run - processing event: {event.type}")
+
                 if event.type == pygame.QUIT:
+                    logger.info("QUIT event received")
                     running = False
                     break
                 elif event.type == pygame.VIDEORESIZE:
+                    logger.debug(f"App.run - video resize: {event.w}x{event.h}")
                     self._handle_resize(event.w, event.h)
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                    logger.debug("App.run - F11 pressed, toggling fullscreen")
                     self._toggle_fullscreen()
 
             if not running:
+                logger.debug("App.run - breaking due to QUIT")
                 break
 
             # Handle scene manager events
             for event in events:
+                logger.debug(f"App.run - passing event to scene manager: {event.type}")
                 result = self.scene_manager.handle_event(event)
                 if result == SceneTransition.QUIT:
+                    logger.info("Scene manager requested quit")
                     running = False
                     break
+                elif result:
+                    logger.debug(f"App.run - scene transition: {result}")
 
             # Draw current scene
+            logger.debug("App.run - calling scene_manager.draw")
             self.scene_manager.draw(self.screen)
 
             pygame.display.flip()
             clock.tick(60)  # 60 FPS
 
         logger.info("Application loop ended")
+        logger.debug("App.run END")
         pygame.quit()
 
     def _handle_resize(self, width: int, height: int) -> None:

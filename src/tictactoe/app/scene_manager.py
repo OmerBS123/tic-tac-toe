@@ -71,7 +71,7 @@ class SceneManager:
         self.leaderboard_scene = LeaderboardScene(storage, width, height)
         self.history_scene = MatchHistoryScene(storage, width, height)
         self.reset_scene = ResetScene(storage, width, height)
-        self.game_scene = GameScene(width, height)
+        self.game_scene = GameScene(storage, width, height)
 
         # Current scene
         self.current_scene = "main_menu"
@@ -143,17 +143,26 @@ class SceneManager:
         Args:
             surface: Pygame surface to draw on
         """
+        logger.debug(f"SceneManager.draw START - current_scene: {self.current_scene}")
+
         match self.current_scene:
             case "main_menu":
+                logger.debug("SceneManager.draw - drawing main menu")
                 self.main_menu_scene.draw(surface)
             case "leaderboard":
+                logger.debug("SceneManager.draw - drawing leaderboard")
                 self.leaderboard_scene.draw(surface)
             case "history":
+                logger.debug("SceneManager.draw - drawing history")
                 self.history_scene.draw(surface)
             case "reset":
+                logger.debug("SceneManager.draw - drawing reset")
                 self.reset_scene.draw(surface)
             case "game":
+                logger.debug("SceneManager.draw - drawing game")
                 self.game_scene.draw(surface)
+
+        logger.debug("SceneManager.draw END")
 
     def on_resize(self, width: int, height: int) -> None:
         """

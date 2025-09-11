@@ -29,7 +29,7 @@ class Colors:
     DRAW_TEXT = (150, 150, 150)  # Gray
 
     # UI colors
-    TEXT = (255, 255, 255)  # White
+    TEXT = (0, 0, 0)  # Black
     TEXT_DARK = (0, 0, 0)  # Black
     TITLE = (100, 200, 255)  # Light blue
     ACCENT = (100, 200, 255)  # Light blue

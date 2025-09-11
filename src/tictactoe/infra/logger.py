@@ -40,7 +40,7 @@ class Logger:
         log_file: str = None,
         max_bytes: int = 5 * 1024 * 1024,
         backup_count: int = 5,
-        console_level: int = logging.INFO,
+        console_level: int = logging.DEBUG,
         file_level: int = logging.DEBUG,
     ) -> None:
         """

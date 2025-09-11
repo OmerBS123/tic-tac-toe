@@ -11,6 +11,7 @@ from ..consts.scene_consts import SceneTransition
 from ..domain.ai import AI
 from ..domain.board import Board
 from ..infra.logger import get_logger
+from ..infra.storage import Storage
 from ..ui.layout import compute_layout, make_fonts
 from ..ui.widgets import GameUI
 
@@ -20,15 +21,19 @@ logger = get_logger()
 class GameScene(Scene):
     """Scene for playing tic-tac-toe matches."""
 
-    def __init__(self, width: int = 1000, height: int = 1000) -> None:
+    def __init__(self, storage: Storage, width: int = 1000, height: int = 1000) -> None:
         """
         Initialize game scene.
 
         Args:
+            storage: Storage instance for database operations
             width: Scene width
             height: Scene height
         """
         super().__init__(width, height)
+
+        # Storage for database operations
+        self.storage = storage
 
         # Game state
         self.board = Board()
@@ -40,6 +45,7 @@ class GameScene(Scene):
         self.ai = None
         self.game_over = False
         self.winner = None
+        self.match_recorded = False  # Track if match has been recorded
 
         # Initialize UI
         self.game_ui = None
@@ -74,6 +80,7 @@ class GameScene(Scene):
         self.current_player = Player.X_PLAYER
         self.game_over = False
         self.winner = None
+        self.match_recorded = False
 
         logger.info(f"Game setup: {mode}, X: {self.player_x_name}, O: {self.player_o_name}")
 
@@ -96,6 +103,8 @@ class GameScene(Scene):
         Returns:
             String indicating scene transition or None if no action needed
         """
+        logger.debug(f"GameScene.handle_event START - event type: {event.type}")
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 logger.info("ESC pressed - returning to menu")
@@ -103,11 +112,23 @@ class GameScene(Scene):
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 mouse_x, mouse_y = event.pos
-                if not self.game_over:
-                    self._handle_board_click(mouse_x, mouse_y)
-                elif self._is_back_button_clicked(mouse_x, mouse_y):
+                logger.debug(f"GameScene.handle_event - mouse click at ({mouse_x}, {mouse_y})")
+
+                if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
                     return SceneTransition.MENU
+                elif not self.game_over:
+                    logger.debug("GameScene.handle_event - handling board click")
+                    self._handle_board_click(mouse_x, mouse_y)
+                else:
+                    logger.debug("GameScene.handle_event - game is over, ignoring board click")
+        elif event.type == pygame.MOUSEMOTION:
+            # Handle mouse motion for hover effects
+            if self.game_ui is not None:
+                mouse_x, mouse_y = event.pos
+                self.game_ui.handle_mouse_motion((mouse_x, mouse_y))
+
+        logger.debug("GameScene.handle_event END")
         return None
 
     def _handle_board_click(self, mouse_x: int, mouse_y: int) -> None:
@@ -175,16 +196,32 @@ class GameScene(Scene):
 
         if self.board.is_draw():
             self.winner = None
+            result = "Draw"
             logger.info("Game ended in a draw")
         else:
             # Get the winner
             winner_player = self.board.get_winner()
             if winner_player is not None:
                 self.winner = self._get_player_name(winner_player)
+                result = "X" if winner_player == Player.X_PLAYER.value else "O"
                 logger.info(f"Game won by: {self.winner}")
             else:
                 self.winner = None
+                result = "Draw"
                 logger.info("Game ended with no winner")
+
+        # Record the match to database if not already recorded
+        if not self.match_recorded:
+            try:
+                ai_level = None
+                if self.game_mode == "pvai":
+                    ai_level = self.ai_difficulty.value.lower()
+
+                self.storage.record_match(player_x=self.player_x_name, player_o=self.player_o_name, result=result, mode=self.game_mode, ai_level=ai_level)
+                self.match_recorded = True
+                logger.info(f"Match recorded: {self.player_x_name} vs {self.player_o_name} → {result}")
+            except Exception as e:
+                logger.error(f"Failed to record match: {e}")
 
     def _get_player_name(self, player: int) -> str:
         """
@@ -226,15 +263,36 @@ class GameScene(Scene):
         Args:
             surface: Pygame surface to draw on
         """
+        logger.debug(f"GameScene.draw START - surface size: {surface.get_size()}")
+
         if self.game_ui is None:
+            logger.debug("GameScene.draw - game_ui is None, returning")
             return
 
+        # Update GameUI state to match GameScene state
+        winner_name = None
+        if self.game_over and self.winner:
+            winner_name = self.winner
+
+        logger.debug("GameScene.draw - updating GameUI state:")
+        logger.debug(f"  current_player: {self.current_player.value}")
+        logger.debug(f"  game_over: {self.game_over}")
+        logger.debug(f"  player_x_name: {self.player_x_name}")
+        logger.debug(f"  player_o_name: {self.player_o_name}")
+        logger.debug(f"  winner_name: {winner_name}")
+
+        self.game_ui.update_game_state(board=self.board, current_player=self.current_player.value, game_over=self.game_over, winner=winner_name, player_x_name=self.player_x_name, player_o_name=self.player_o_name)
+
         # Draw game UI
+        logger.debug("GameScene.draw - calling game_ui.render")
         self.game_ui.render(surface)
 
         # Draw game over overlay if needed
         if self.game_over:
+            logger.debug("GameScene.draw - calling _draw_game_over_overlay")
             self._draw_game_over_overlay(surface)
+
+        logger.debug("GameScene.draw END")
 
     def _draw_game_over_overlay(self, surface: pygame.Surface) -> None:
         """

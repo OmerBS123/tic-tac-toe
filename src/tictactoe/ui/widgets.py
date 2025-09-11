@@ -1,20 +1,21 @@
 """
-Game UI implementation using pygame for the tic-tac-toe board.
+UI widgets for tic-tac-toe game.
 """
 
 from collections.abc import Callable
 
 import pygame
 
-from .board import Board
-from .consts.board_consts import Player
-from .logger import get_logger
+from ..domain.board import Board
+from ..consts.board_consts import Player
+from ..infra.logger import get_logger
+from .theme import Colors, FontSizes
 
 logger = get_logger()
 
 
 class GameUI:
-    """Game UI manager for pygame-based tic-tac-toe board."""
+    """Game UI widget for pygame-based tic-tac-toe board."""
 
     def __init__(self, width: int = 600, height: int = 700) -> None:
         """
@@ -28,14 +29,6 @@ class GameUI:
         self.height = height
         self.board_size = 3
         self.cell_size = min(width, height) // 3
-
-        # Colors
-        self.BACKGROUND_COLOR = (255, 255, 255)  # White
-        self.BOARD_COLOR = (0, 0, 0)  # Black
-        self.X_COLOR = (255, 0, 0)  # Red
-        self.O_COLOR = (0, 0, 255)  # Blue
-        self.HOVER_COLOR = (200, 200, 200)  # Light gray
-        self.WIN_LINE_COLOR = (0, 255, 0)  # Green
 
         # Initialize pygame
         pygame.init()
@@ -182,7 +175,7 @@ class GameUI:
     def render(self) -> None:
         """Render the game to the screen."""
         # Clear screen
-        self.screen.fill(self.BACKGROUND_COLOR)
+        self.screen.fill(Colors.BACKGROUND)
 
         # Draw board
         self._draw_board()
@@ -211,12 +204,12 @@ class GameUI:
         # Draw vertical lines (extend to separation line)
         for i in range(1, self.board_size):
             x = i * self.cell_size
-            pygame.draw.line(self.screen, self.BOARD_COLOR, (x, 0), (x, line_y), 3)
+            pygame.draw.line(self.screen, Colors.BOARD, (x, 0), (x, line_y), 3)
 
         # Draw horizontal lines (only within the board area)
         for i in range(1, self.board_size):
             y = i * self.cell_size
-            pygame.draw.line(self.screen, self.BOARD_COLOR, (0, y), (self.width, y), 3)
+            pygame.draw.line(self.screen, Colors.BOARD, (0, y), (self.width, y), 3)
 
     def _draw_pieces(self) -> None:
         """Draw X's and O's on the board."""
@@ -241,14 +234,14 @@ class GameUI:
 
         if player == Player.X_PLAYER.value:
             # Draw X
-            color = self.X_COLOR
+            color = Colors.X_COLOR
             # Draw two diagonal lines
             pygame.draw.line(self.screen, color, (center_x - radius, center_y - radius), (center_x + radius, center_y + radius), 5)
             pygame.draw.line(self.screen, color, (center_x + radius, center_y - radius), (center_x - radius, center_y + radius), 5)
 
         elif player == Player.O_PLAYER.value:
             # Draw O
-            color = self.O_COLOR
+            color = Colors.O_COLOR
             pygame.draw.circle(self.screen, color, (center_x, center_y), radius, 5)
 
     def _draw_hover(self) -> None:
@@ -261,7 +254,7 @@ class GameUI:
             # Draw semi-transparent overlay
             hover_surface = pygame.Surface((self.cell_size, self.cell_size))
             hover_surface.set_alpha(50)
-            hover_surface.fill(self.HOVER_COLOR)
+            hover_surface.fill(Colors.HOVER)
             self.screen.blit(hover_surface, (x, y))
 
     def _draw_win_line(self) -> None:
@@ -275,7 +268,7 @@ class GameUI:
             start_pos = (win_line[0][1] * self.cell_size + self.cell_size // 2, win_line[0][0] * self.cell_size + self.cell_size // 2)
             end_pos = (win_line[2][1] * self.cell_size + self.cell_size // 2, win_line[2][0] * self.cell_size + self.cell_size // 2)
 
-            pygame.draw.line(self.screen, self.WIN_LINE_COLOR, start_pos, end_pos, 8)
+            pygame.draw.line(self.screen, Colors.WIN_LINE, start_pos, end_pos, 8)
 
     def _get_win_line(self) -> list[tuple[int, int]] | None:
         """
@@ -322,10 +315,10 @@ class GameUI:
         line_y = board_height + 20
         text_y = board_height + 70  # Moved further down for more breathing room
 
-        pygame.draw.line(self.screen, self.BOARD_COLOR, (0, line_y), (self.width, line_y), 2)
+        pygame.draw.line(self.screen, Colors.BOARD, (0, line_y), (self.width, line_y), 2)
 
         # Render text with smaller font
-        text_surface = self.status_font.render(status_text, True, self.BOARD_COLOR)
+        text_surface = self.status_font.render(status_text, True, Colors.BOARD)
         text_rect = text_surface.get_rect(center=(self.width // 2, text_y))
         self.screen.blit(text_surface, text_rect)
 
@@ -391,3 +384,21 @@ class GameUI:
         """
         self.current_player = player
         logger.debug(f"Current player set to: {player}")
+
+    def on_resize(self, width: int, height: int) -> None:
+        """
+        Handle window resize.
+
+        Args:
+            width: New window width
+            height: New window height
+        """
+        self.width = width
+        self.height = height
+        self.cell_size = min(width, height) // 3
+
+        # Update fonts
+        self.font = pygame.font.Font(None, self.cell_size // 2)
+        self.status_font = pygame.font.Font(None, self.cell_size // 3)
+
+        logger.info(f"GameUI resized to {width}x{height}")

@@ -5,37 +5,14 @@ Match history screen logic for displaying recent games.
 from datetime import datetime
 from typing import Any, NamedTuple
 
-from ..storage import Storage, MatchRecord
-from ..logger import get_logger
+from ..models import MatchRecord, HistoryRow, HistoryData
+from ...infra.storage import Storage
+from ...infra.logger import get_logger
 
 logger = get_logger()
 
 
-class HistoryRow(NamedTuple):
-    """Single history row data for pygame rendering."""
-
-    played_at: datetime
-    date_str: str
-    time_str: str
-    player_x_name: str
-    player_o_name: str
-    result: str
-    mode: str
-    ai_level: str | None
-    ai_level_display: str
-
-
-class HistoryData(NamedTuple):
-    """Complete history data for pygame rendering."""
-
-    title: str
-    headers: list[str]
-    rows: list[HistoryRow]
-    total_matches: int
-    filter_applied: str | None
-
-
-class HistoryManager:
+class HistoryService:
     """Manager for match history functionality."""
 
     def __init__(self, storage: Storage) -> None:
@@ -82,7 +59,16 @@ class HistoryManager:
             date_str = played_at.strftime("%Y-%m-%d")
             time_str = played_at.strftime("%H:%M")
 
-            ai_level_display = match.ai_level or "N/A"
+            # Convert result character to player name
+            if match.result == "X":
+                result_display = match.player_x_name
+            elif match.result == "O":
+                result_display = match.player_o_name
+            else:  # Draw
+                result_display = "Draw"
+
+            # Use dash instead of N/A for AI level
+            ai_level_display = match.ai_level or "-"
 
             row = HistoryRow(
                 played_at=played_at,
@@ -90,7 +76,7 @@ class HistoryManager:
                 time_str=time_str,
                 player_x_name=match.player_x_name,
                 player_o_name=match.player_o_name,
-                result=match.result,
+                result=result_display,  # Use player name instead of character
                 mode=match.mode.upper(),
                 ai_level=match.ai_level,
                 ai_level_display=ai_level_display,

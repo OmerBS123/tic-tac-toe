@@ -5,35 +5,12 @@ SQLite storage for tic-tac-toe leaderboard and match history.
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any
 
+from ..domain.models import PlayerStats, MatchRecord
 from .logger import get_logger
 
 logger = get_logger()
-
-
-class PlayerStats(NamedTuple):
-    """Player statistics for leaderboard display."""
-
-    name: str
-    total_wins: int
-    pvp_wins: int
-    ai_easy_wins: int
-    ai_medium_wins: int
-    ai_hard_wins: int
-    win_percentage: float
-    total_games: int
-
-
-class MatchRecord(NamedTuple):
-    """Match record for history display."""
-
-    played_at: str
-    player_x_name: str
-    player_o_name: str
-    result: str
-    mode: str
-    ai_level: str | None
 
 
 class Storage:
@@ -220,7 +197,7 @@ class Storage:
                     ai_medium_wins,
                     ai_hard_wins,
                     CASE 
-                        WHEN total_games > 0 THEN ROUND(CAST(total_wins AS FLOAT) / total_games, 2)
+                        WHEN total_games > 0 THEN ROUND(CAST(total_wins AS FLOAT) / total_games * 100, 1)
                         ELSE 0.0
                     END as win_percentage,
                     total_games

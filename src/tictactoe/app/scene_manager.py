@@ -3,16 +3,18 @@ Scene manager for coordinating all game scenes.
 """
 
 from collections.abc import Callable
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pygame
 
-from tictactoe.infra.storage import Storage
-from tictactoe.screens.main_menu_scene import MainMenuScene
-from tictactoe.screens.leaderboard_scene import LeaderboardScene
-from tictactoe.screens.history_scene import MatchHistoryScene
-from tictactoe.screens.reset_scene import ResetScene
+from tictactoe.consts.scene_consts import SceneTransition
 from tictactoe.infra.logger import get_logger
+from tictactoe.infra.storage import Storage
+from tictactoe.screens.game_scene import GameScene
+from tictactoe.screens.history_scene import MatchHistoryScene
+from tictactoe.screens.leaderboard_scene import LeaderboardScene
+from tictactoe.screens.main_menu_scene import MainMenuScene
+from tictactoe.screens.reset_scene import ResetScene
 
 logger = get_logger()
 
@@ -69,6 +71,7 @@ class SceneManager:
         self.leaderboard_scene = LeaderboardScene(storage, width, height)
         self.history_scene = MatchHistoryScene(storage, width, height)
         self.reset_scene = ResetScene(storage, width, height)
+        self.game_scene = GameScene(width, height)
 
         # Current scene
         self.current_scene = "main_menu"
@@ -87,7 +90,7 @@ class SceneManager:
             quit_game=callbacks.quit_game,
         )
 
-    def handle_event(self, event: pygame.event.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events for the current scene.
 
@@ -97,35 +100,39 @@ class SceneManager:
         Returns:
             Optional string indicating scene transition
         """
-        if self.current_scene == "main_menu":
-            result = self.main_menu_scene.handle_event(event)
-        elif self.current_scene == "leaderboard":
-            result = self.leaderboard_scene.handle_event(event)
-        elif self.current_scene == "history":
-            result = self.history_scene.handle_event(event)
-        elif self.current_scene == "reset":
-            result = self.reset_scene.handle_event(event)
-        else:
-            result = None
+        match self.current_scene:
+            case "main_menu":
+                result = self.main_menu_scene.handle_event(event)
+            case "leaderboard":
+                result = self.leaderboard_scene.handle_event(event)
+            case "history":
+                result = self.history_scene.handle_event(event)
+            case "reset":
+                result = self.reset_scene.handle_event(event)
+            case "game":
+                result = self.game_scene.handle_event(event)
+            case _:
+                result = None
 
         # Handle scene transitions
         if result:
-            if result == "menu":
-                self.current_scene = "main_menu"
-            elif result == "leaderboard":
-                self.current_scene = "leaderboard"
-            elif result == "history":
-                self.current_scene = "history"
-            elif result == "reset":
-                self.current_scene = "reset"
-            elif result == "game":
-                return "game"
-            elif result == "quit":
-                return "quit"
-            elif result == "reset_confirmed":
-                logger.info("Reset confirmed - executing reset")
-                self.storage.reset_data()
-                self.current_scene = "main_menu"
+            match result:
+                case SceneTransition.MENU:
+                    self.current_scene = "main_menu"
+                case SceneTransition.LEADERBOARD:
+                    self.current_scene = "leaderboard"
+                case SceneTransition.HISTORY:
+                    self.current_scene = "history"
+                case SceneTransition.RESET:
+                    self.current_scene = "reset"
+                case SceneTransition.GAME:
+                    return SceneTransition.GAME
+                case SceneTransition.QUIT:
+                    return SceneTransition.QUIT
+                case SceneTransition.RESET_CONFIRMED:
+                    logger.info("Reset confirmed - executing reset")
+                    self.storage.reset_data()
+                    self.current_scene = "main_menu"
 
         return None
 
@@ -136,14 +143,17 @@ class SceneManager:
         Args:
             surface: Pygame surface to draw on
         """
-        if self.current_scene == "main_menu":
-            self.main_menu_scene.draw(surface)
-        elif self.current_scene == "leaderboard":
-            self.leaderboard_scene.draw(surface)
-        elif self.current_scene == "history":
-            self.history_scene.draw(surface)
-        elif self.current_scene == "reset":
-            self.reset_scene.draw(surface)
+        match self.current_scene:
+            case "main_menu":
+                self.main_menu_scene.draw(surface)
+            case "leaderboard":
+                self.leaderboard_scene.draw(surface)
+            case "history":
+                self.history_scene.draw(surface)
+            case "reset":
+                self.reset_scene.draw(surface)
+            case "game":
+                self.game_scene.draw(surface)
 
     def on_resize(self, width: int, height: int) -> None:
         """
@@ -162,6 +172,7 @@ class SceneManager:
             self.leaderboard_scene.on_resize(width, height)
             self.history_scene.on_resize(width, height)
             self.reset_scene.on_resize(width, height)
+            self.game_scene.on_resize(width, height)
 
             logger.info(f"SceneManager resized to {width}x{height}")
 
@@ -173,6 +184,30 @@ class SceneManager:
         """Set the current scene."""
         self.current_scene = scene_name
         logger.info(f"Switched to scene: {scene_name}")
+
+    def start_pvp_game(self, player_x_name: str, player_o_name: str) -> None:
+        """
+        Start a Player vs Player game.
+
+        Args:
+            player_x_name: Name of player X
+            player_o_name: Name of player O
+        """
+        self.game_scene.setup_game("pvp", player_x_name, player_o_name)
+        self.current_scene = "game"
+        logger.info(f"Started PvP game: {player_x_name} vs {player_o_name}")
+
+    def start_pvai_game(self, player_name: str, ai_difficulty) -> None:
+        """
+        Start a Player vs AI game.
+
+        Args:
+            player_name: Name of human player
+            ai_difficulty: AI difficulty level
+        """
+        self.game_scene.setup_game("pvai", player_name, ai_difficulty=ai_difficulty)
+        self.current_scene = "game"
+        logger.info(f"Started PvAI game: {player_name} vs AI ({ai_difficulty.value})")
 
 
 # Legacy compatibility functions
@@ -195,7 +230,7 @@ def create_main_menu(screen: pygame.Surface, callbacks: MenuCallbacks) -> SceneM
     return scene_manager
 
 
-def get_menu_data(scene_manager: SceneManager) -> Dict[str, Any]:
+def get_menu_data(scene_manager: SceneManager) -> dict[str, Any]:
     """
     Get current menu data for debugging or state management.
 
@@ -214,29 +249,3 @@ def get_menu_data(scene_manager: SceneManager) -> Dict[str, Any]:
         data["ai_difficulty"] = main_menu.ai_difficulty.value
 
     return data
-
-
-def set_menu_data(scene_manager: SceneManager, data: Dict[str, Any]) -> None:
-    """
-    Set menu data from a dictionary.
-
-    Args:
-        scene_manager: Scene manager instance
-        data: Dictionary with menu values
-    """
-    if hasattr(scene_manager, "main_menu_scene"):
-        main_menu = scene_manager.main_menu_scene
-
-        if "player_x" in data:
-            main_menu.player_x_name = data["player_x"]
-        if "player_o" in data:
-            main_menu.player_o_name = data["player_o"]
-        if "ai_difficulty" in data:
-            # Find the difficulty enum value
-            from .consts.ai_consts import Difficulty
-
-            for diff in Difficulty:
-                if diff.value == data["ai_difficulty"]:
-                    main_menu.ai_difficulty = diff
-                    main_menu.selected_difficulty_index = list(Difficulty).index(diff)
-                    break

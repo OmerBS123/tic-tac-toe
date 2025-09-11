@@ -6,8 +6,8 @@ from collections.abc import Iterator
 
 import numpy as np
 
-from .consts.board_consts import BOARD_SIZE, Player, Score
-from .logger import get_logger
+from ..consts.board_consts import BOARD_SIZE, Player, Score
+from ..infra.logger import get_logger
 
 logger = get_logger()
 
@@ -33,7 +33,7 @@ class Board:
 
         Args:
             move: Tuple of (row, col) coordinates
-            player: Player making the move (X_PLAYER or O_PLAYER)
+            player: Player making the move (Player enum value as int)
 
         Returns:
             True if move was valid and applied, False otherwise
@@ -115,7 +115,7 @@ class Board:
         Check if there's a winner on the board.
 
         Returns:
-            X_PLAYER, O_PLAYER if there's a winner, None otherwise
+            Winner player value (Player enum value as int) or None if no winner
         """
         for row in range(BOARD_SIZE):
             if self._check_line([(row, 0), (row, 1), (row, 2)]):
@@ -244,6 +244,64 @@ class Board:
             Deep copy of the board
         """
         return self.board.copy()
+
+    def get_cell(self, row: int, col: int) -> int:
+        """
+        Get the value of a specific cell.
+
+        Args:
+            row: Row index (0-2)
+            col: Column index (0-2)
+
+        Returns:
+            Cell value (Player enum value as int)
+        """
+        if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
+            return int(self.board[row, col])
+        else:
+            logger.warning(f"Invalid cell coordinates: ({row}, {col})")
+            return Player.EMPTY.value
+
+    def make_move(self, row: int, col: int, player: int) -> bool:
+        """
+        Make a move on the board.
+
+        Args:
+            row: Row index (0-2)
+            col: Column index (0-2)
+            player: Player making the move (Player enum value as int)
+
+        Returns:
+            True if move was valid and applied, False otherwise
+        """
+        return self.apply((row, col), player)
+
+    def is_game_over(self) -> bool:
+        """
+        Check if the game is over (win or draw).
+
+        Returns:
+            True if game is over, False otherwise
+        """
+        return self.check_winner() is not None or self.is_draw()
+
+    def is_draw(self) -> bool:
+        """
+        Check if the game is a draw (board full, no winner).
+
+        Returns:
+            True if game is a draw, False otherwise
+        """
+        return self.check_winner() is None and self.is_board_full()
+
+    def get_winner(self) -> int | None:
+        """
+        Get the winner of the game.
+
+        Returns:
+            Winner player value (Player enum value as int) or None if no winner
+        """
+        return self.check_winner()
 
     def __str__(self) -> str:
         """String representation of the board for debugging."""

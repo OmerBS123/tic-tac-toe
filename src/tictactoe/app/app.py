@@ -4,10 +4,12 @@ Main application orchestrator for tic-tac-toe game.
 
 import pygame
 
-from tictactoe.app.scene_manager import SceneManager, MenuCallbacks
+from tictactoe.app.scene_manager import MenuCallbacks, SceneManager
+from tictactoe.consts.ai_consts import Difficulty
+from tictactoe.consts.scene_consts import SceneTransition
+from tictactoe.infra.logger import get_logger
 from tictactoe.infra.storage import Storage
 from tictactoe.ui.layout import get_initial_window_size
-from tictactoe.infra.logger import get_logger
 
 logger = get_logger()
 
@@ -67,8 +69,7 @@ class TicTacToeApp:
             player_o: Player O name
         """
         logger.info(f"Starting PvP game: {player_x} vs {player_o}")
-        # TODO: Implement game logic
-        # For now, just log the game start
+        self.scene_manager.start_pvp_game(player_x, player_o)
 
     def _start_pvai_game(self, player_name: str, difficulty: str) -> None:
         """
@@ -79,8 +80,14 @@ class TicTacToeApp:
             difficulty: AI difficulty level
         """
         logger.info(f"Starting PvAI game: {player_name} vs AI ({difficulty})")
-        # TODO: Implement game logic
-        # For now, just log the game start
+        # Convert string to Difficulty enum
+        try:
+            ai_difficulty = Difficulty(difficulty)
+            self.scene_manager.start_pvai_game(player_name, ai_difficulty)
+        except ValueError:
+            logger.error(f"Invalid difficulty level: {difficulty}")
+            # Default to medium difficulty
+            self.scene_manager.start_pvai_game(player_name, Difficulty.MEDIUM)
 
     def _show_leaderboard(self) -> None:
         """Show leaderboard screen."""
@@ -127,7 +134,7 @@ class TicTacToeApp:
             # Handle scene manager events
             for event in events:
                 result = self.scene_manager.handle_event(event)
-                if result == "quit":
+                if result == SceneTransition.QUIT:
                     running = False
                     break
 

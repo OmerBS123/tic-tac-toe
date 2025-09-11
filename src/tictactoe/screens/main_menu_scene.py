@@ -2,14 +2,16 @@
 Main menu scene for the tic-tac-toe game using pygame.
 """
 
-import pygame
-from typing import Optional, Callable
+from collections.abc import Callable
 
-from ..infra.storage import Storage
+import pygame
+
 from ..app.scene import Scene
-from ..ui.layout import compute_layout, make_fonts
 from ..consts.ai_consts import Difficulty
+from ..consts.scene_consts import SceneTransition
 from ..infra.logger import get_logger
+from ..infra.storage import Storage
+from ..ui.layout import compute_layout, make_fonts
 
 logger = get_logger()
 
@@ -30,12 +32,12 @@ class MainMenuScene(Scene):
         self.storage = storage
 
         # Callbacks for scene transitions
-        self.play_pvp_callback: Optional[Callable[[str, str], None]] = None
-        self.play_vs_ai_callback: Optional[Callable[[str, str], None]] = None
-        self.show_leaderboard_callback: Optional[Callable[[], None]] = None
-        self.show_history_callback: Optional[Callable[[], None]] = None
-        self.reset_data_callback: Optional[Callable[[], None]] = None
-        self.quit_game_callback: Optional[Callable[[], None]] = None
+        self.play_pvp_callback: Callable[[str, str], None] | None = None
+        self.play_vs_ai_callback: Callable[[str, str], None] | None = None
+        self.show_leaderboard_callback: Callable[[], None] | None = None
+        self.show_history_callback: Callable[[], None] | None = None
+        self.reset_data_callback: Callable[[], None] | None = None
+        self.quit_game_callback: Callable[[], None] | None = None
 
         # Input state
         self.player_x_name = "Player X"
@@ -105,7 +107,7 @@ class MainMenuScene(Scene):
         self.input_x = (self.width - self.input_width) // 2
         self.button_x = (self.width - self.button_width) // 2
 
-    def handle_event(self, event: pygame.event.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events.
 
@@ -161,7 +163,7 @@ class MainMenuScene(Scene):
 
         return None
 
-    def _handle_mouse_click(self, mouse_x: int, mouse_y: int) -> Optional[str]:
+    def _handle_mouse_click(self, mouse_x: int, mouse_y: int) -> str | None:
         """Handle mouse click events."""
         # Check input field clicks
         if self._is_player_x_input_clicked(mouse_x, mouse_y):
@@ -200,7 +202,7 @@ class MainMenuScene(Scene):
 
         return None
 
-    def _start_pvp_game(self) -> Optional[str]:
+    def _start_pvp_game(self) -> str | None:
         """Start PvP game with current input values."""
         # Validate inputs
         if not self.player_x_name.strip() or not self.player_o_name.strip():
@@ -214,9 +216,9 @@ class MainMenuScene(Scene):
         logger.info(f"Starting PvP game: {self.player_x_name} vs {self.player_o_name}")
         if self.play_pvp_callback:
             self.play_pvp_callback(self.player_x_name.strip(), self.player_o_name.strip())
-        return "game"
+        return SceneTransition.GAME
 
-    def _start_pvai_game(self) -> Optional[str]:
+    def _start_pvai_game(self) -> str | None:
         """Start PvAI game with current input values."""
         # Validate input
         if not self.player_x_name.strip():
@@ -226,7 +228,7 @@ class MainMenuScene(Scene):
         logger.info(f"Starting PvAI game: {self.player_x_name} vs AI ({self.ai_difficulty.value})")
         if self.play_vs_ai_callback:
             self.play_vs_ai_callback(self.player_x_name.strip(), self.ai_difficulty.value)
-        return "game"
+        return SceneTransition.GAME
 
     def draw(self, surface: pygame.Surface) -> None:
         """

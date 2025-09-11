@@ -3,11 +3,10 @@ SQLite storage for tic-tac-toe leaderboard and match history.
 """
 
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..domain.models import PlayerStats, MatchRecord
+from ..domain.models import MatchRecord, PlayerStats
 from .logger import get_logger
 
 logger = get_logger()

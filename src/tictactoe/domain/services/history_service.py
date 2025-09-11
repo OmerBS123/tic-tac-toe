@@ -3,11 +3,11 @@ Match history screen logic for displaying recent games.
 """
 
 from datetime import datetime
-from typing import Any, NamedTuple
+from typing import Any
 
-from ..models import MatchRecord, HistoryRow, HistoryData
-from ...infra.storage import Storage
 from ...infra.logger import get_logger
+from ...infra.storage import Storage
+from ..models import HistoryData, HistoryRow, MatchRecord
 
 logger = get_logger()
 

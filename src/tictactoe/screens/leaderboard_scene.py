@@ -4,11 +4,12 @@ Leaderboard scene for displaying player statistics using pygame.
 
 import pygame
 
-from ..infra.storage import Storage
 from ..app.scene import Scene
-from ..ui.layout import Layout, compute_layout, make_fonts
+from ..consts.scene_consts import SceneTransition
 from ..domain.services.leaderboard_service import LeaderboardService
 from ..infra.logger import get_logger
+from ..infra.storage import Storage
+from ..ui.layout import compute_layout, make_fonts
 
 logger = get_logger()
 
@@ -53,23 +54,26 @@ class LeaderboardScene(Scene):
         self.header_height = max(40, int(self.layout.font_ui * 1.8))
         self.margin_x = self.layout.safe_margin
 
-    def handle_event(self, event: pygame.event.Event) -> None:
+    def handle_event(self, event: pygame.event.Event) -> str | None:
         """
         Handle pygame events.
 
         Args:
             event: Pygame event
+
+        Returns:
+            String indicating scene transition (SceneTransition.MENU) or None if no action needed
         """
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 logger.info("ESC pressed - returning to menu")
-                return "menu"
+                return SceneTransition.MENU
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 mouse_x, mouse_y = event.pos
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
-                    return "menu"
+                    return SceneTransition.MENU
         return None
 
     def draw(self, surface: pygame.Surface) -> None:

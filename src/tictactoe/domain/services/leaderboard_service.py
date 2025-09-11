@@ -48,7 +48,7 @@ class LeaderboardService:
         """
         leaderboard = self.storage.leaderboard(limit)
 
-        medals = ["1st", "2nd", "3rd"]  # Use text instead of emojis
+        medals = ["1st", "2nd", "3rd"]
         rows = []
 
         for i, player in enumerate(leaderboard):
@@ -69,9 +69,21 @@ class LeaderboardService:
             )
             rows.append(row)
 
-        headers = ["Rank", "Player", "Total", "PvP", "AI-E", "AI-M", "AI-H", "Win%", "Games"]
+        headers = [
+            "Rank",
+            "Player",
+            "Total",
+            "PvP",
+            "AI-E",
+            "AI-M",
+            "AI-H",
+            "Win%",
+            "Games",
+        ]
 
-        return LeaderboardData(title="LEADERBOARD", headers=headers, rows=rows, total_players=len(rows))
+        return LeaderboardData(
+            title="LEADERBOARD", headers=headers, rows=rows, total_players=len(rows)
+        )
 
     def get_player_rank(self, player_name: str) -> int | None:
         """

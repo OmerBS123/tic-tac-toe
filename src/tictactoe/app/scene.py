@@ -64,6 +64,7 @@ class Scene(ABC):
             self.height = height
             self._on_resize_impl(width, height)
 
+    @abstractmethod
     def _on_resize_impl(self, width: int, height: int) -> None:
         """
         Implementation-specific resize handling.

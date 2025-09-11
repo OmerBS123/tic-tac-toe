@@ -7,11 +7,11 @@ while keeping dummy callbacks for game logic to avoid side effects.
 
 import pygame
 
-from src.tictactoe.app.scene_manager import MenuCallbacks, create_main_menu, SceneManager
+from src.tictactoe.app.scene_manager import (
+    MenuCallbacks,
+    create_main_menu,
+)
 from src.tictactoe.infra.storage import Storage
-from src.tictactoe.screens.leaderboard_scene import LeaderboardScene
-from src.tictactoe.screens.history_scene import MatchHistoryScene
-from src.tictactoe.screens.reset_scene import ResetScene
 
 
 def add_sample_data(storage: Storage) -> None:

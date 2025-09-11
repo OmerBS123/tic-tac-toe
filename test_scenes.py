@@ -3,9 +3,10 @@ Test script for leaderboard and history scenes.
 """
 
 import pygame
-from src.tictactoe.storage import Storage
-from src.tictactoe.screens.leaderboard_scene import LeaderboardScene
+
 from src.tictactoe.screens.history_scene import MatchHistoryScene
+from src.tictactoe.screens.leaderboard_scene import LeaderboardScene
+from src.tictactoe.storage import Storage
 
 
 def add_sample_data(storage: Storage) -> None:

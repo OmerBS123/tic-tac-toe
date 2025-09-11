@@ -85,17 +85,29 @@ class Logger:
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
 
-        console_formatter = logging.Formatter("%(asctime)s | %(levelname)-8s | %(message)s", datefmt="%H:%M:%S")
+        console_formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)-8s | %(message)s", datefmt="%H:%M:%S"
+        )
         console_handler.setFormatter(console_formatter)
 
         self.logger.addHandler(console_handler)
 
-    def _setup_file_handler(self, level: int, max_bytes: int, backup_count: int) -> None:
+    def _setup_file_handler(
+        self, level: int, max_bytes: int, backup_count: int
+    ) -> None:
         """Setup file handler with rotation."""
-        file_handler = RotatingFileHandler(self._log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
+        file_handler = RotatingFileHandler(
+            self._log_file,
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding="utf-8",
+        )
         file_handler.setLevel(level)
 
-        file_formatter = logging.Formatter("%(asctime)s | %(name)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+        file_formatter = logging.Formatter(
+            "%(asctime)s | %(name)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
         file_handler.setFormatter(file_formatter)
 
         self.logger.addHandler(file_handler)
@@ -127,7 +139,9 @@ class Logger:
     def set_console_level(self, level: int) -> None:
         """Change console log level dynamically."""
         for handler in self.logger.handlers:
-            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, RotatingFileHandler):
+            if isinstance(handler, logging.StreamHandler) and not isinstance(
+                handler, RotatingFileHandler
+            ):
                 handler.setLevel(level)
                 self.info(f"Console log level changed to {logging.getLevelName(level)}")
 

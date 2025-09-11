@@ -6,7 +6,7 @@ import pygame
 
 from ..app.scene import Scene
 from ..consts.ai_consts import Difficulty
-from ..consts.board_consts import Player
+from ..consts.board_consts import MatchResult, Player
 from ..consts.scene_consts import SceneTransition
 from ..domain.ai import AI
 from ..domain.board import Board
@@ -32,28 +32,31 @@ class GameScene(Scene):
         """
         super().__init__(width, height)
 
-        # Storage for database operations
         self.storage = storage
 
-        # Game state
         self.board = Board()
         self.current_player = Player.X_PLAYER
-        self.game_mode = "pvp"  # "pvp" or "pvai"
+        self.game_mode = "pvp"
         self.player_x_name = "Player X"
         self.player_o_name = "Player O"
         self.ai_difficulty = Difficulty.MEDIUM
         self.ai = None
         self.game_over = False
         self.winner = None
-        self.match_recorded = False  # Track if match has been recorded
+        self.match_recorded = False
 
-        # Initialize UI
         self.game_ui = None
         self._on_resize_impl(width, height)
 
         logger.info("GameScene initialized")
 
-    def setup_game(self, mode: str, player_x_name: str, player_o_name: str = None, ai_difficulty: Difficulty = None) -> None:
+    def setup_game(
+        self,
+        mode: str,
+        player_x_name: str,
+        player_o_name: str = None,
+        ai_difficulty: Difficulty = None,
+    ) -> None:
         """
         Setup game parameters.
 
@@ -82,14 +85,15 @@ class GameScene(Scene):
         self.winner = None
         self.match_recorded = False
 
-        logger.info(f"Game setup: {mode}, X: {self.player_x_name}, O: {self.player_o_name}")
+        logger.info(
+            f"Game setup: {mode}, X: {self.player_x_name}, O: {self.player_o_name}"
+        )
 
     def _on_resize_impl(self, width: int, height: int) -> None:
         """Handle resize implementation."""
         self.layout = compute_layout(width, height)
         self.fonts = make_fonts(self.layout)
 
-        # Initialize game UI
         if self.game_ui is None:
             self.game_ui = GameUI(self.board, self.layout, self.fonts)
 
@@ -110,9 +114,11 @@ class GameScene(Scene):
                 logger.info("ESC pressed - returning to menu")
                 return SceneTransition.MENU
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+            if event.button == 1:
                 mouse_x, mouse_y = event.pos
-                logger.debug(f"GameScene.handle_event - mouse click at ({mouse_x}, {mouse_y})")
+                logger.debug(
+                    f"GameScene.handle_event - mouse click at ({mouse_x}, {mouse_y})"
+                )
 
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
@@ -121,9 +127,10 @@ class GameScene(Scene):
                     logger.debug("GameScene.handle_event - handling board click")
                     self._handle_board_click(mouse_x, mouse_y)
                 else:
-                    logger.debug("GameScene.handle_event - game is over, ignoring board click")
+                    logger.debug(
+                        "GameScene.handle_event - game is over, ignoring board click"
+                    )
         elif event.type == pygame.MOUSEMOTION:
-            # Handle mouse motion for hover effects
             if self.game_ui is not None:
                 mouse_x, mouse_y = event.pos
                 self.game_ui.handle_mouse_motion((mouse_x, mouse_y))
@@ -142,32 +149,36 @@ class GameScene(Scene):
         if self.game_ui is None:
             return
 
-        # Get clicked cell
         cell = self.game_ui.get_cell_from_mouse(mouse_x, mouse_y)
         if cell is None:
             return
 
         row, col = cell
 
-        # Check if cell is empty
         if self.board.get_cell(row, col) != Player.EMPTY.value:
             logger.debug(f"Cell ({row}, {col}) is already occupied")
             return
 
-        # Make move
         self.board.make_move(row, col, self.current_player.value)
-        logger.info(f"{self._get_player_name(self.current_player.value)} played at ({row}, {col})")
+        logger.info(
+            f"{self._get_player_name(self.current_player.value)} played at ({row}, {col})"
+        )
 
-        # Check for game over
         if self.board.is_game_over():
             self._handle_game_over()
             return
 
-        # Switch players
-        self.current_player = Player.O_PLAYER if self.current_player == Player.X_PLAYER else Player.X_PLAYER
+        self.current_player = (
+            Player.O_PLAYER
+            if self.current_player == Player.X_PLAYER
+            else Player.X_PLAYER
+        )
 
-        # Handle AI move (if PvAI and it's AI's turn)
-        if self.game_mode == "pvai" and self.current_player == Player.O_PLAYER and not self.game_over:
+        if (
+            self.game_mode == "pvai"
+            and self.current_player == Player.O_PLAYER
+            and not self.game_over
+        ):
             self._make_ai_move()
 
     def _make_ai_move(self) -> None:
@@ -180,12 +191,10 @@ class GameScene(Scene):
             self.board.make_move(row, col, self.current_player.value)
             logger.info(f"AI played at ({row}, {col})")
 
-            # Check for game over
             if self.board.is_game_over():
                 self._handle_game_over()
                 return
 
-            # Switch back to human player
             self.current_player = Player.X_PLAYER
         except Exception as e:
             logger.error(f"AI move failed: {e}")
@@ -196,30 +205,40 @@ class GameScene(Scene):
 
         if self.board.is_draw():
             self.winner = None
-            result = "Draw"
+            result = MatchResult.DRAW.value
             logger.info("Game ended in a draw")
         else:
-            # Get the winner
             winner_player = self.board.get_winner()
             if winner_player is not None:
                 self.winner = self._get_player_name(winner_player)
-                result = "X" if winner_player == Player.X_PLAYER.value else "O"
+                result = (
+                    MatchResult.X_WIN.value
+                    if winner_player == Player.X_PLAYER.value
+                    else MatchResult.O_WIN.value
+                )
                 logger.info(f"Game won by: {self.winner}")
             else:
                 self.winner = None
-                result = "Draw"
+                result = MatchResult.DRAW.value
                 logger.info("Game ended with no winner")
 
-        # Record the match to database if not already recorded
         if not self.match_recorded:
             try:
                 ai_level = None
                 if self.game_mode == "pvai":
                     ai_level = self.ai_difficulty.value.lower()
 
-                self.storage.record_match(player_x=self.player_x_name, player_o=self.player_o_name, result=result, mode=self.game_mode, ai_level=ai_level)
+                self.storage.record_match(
+                    player_x=self.player_x_name,
+                    player_o=self.player_o_name,
+                    result=result,
+                    mode=self.game_mode,
+                    ai_level=ai_level,
+                )
                 self.match_recorded = True
-                logger.info(f"Match recorded: {self.player_x_name} vs {self.player_o_name} → {result}")
+                logger.info(
+                    f"Match recorded: {self.player_x_name} vs {self.player_o_name} → {result}"
+                )
             except Exception as e:
                 logger.error(f"Failed to record match: {e}")
 
@@ -269,7 +288,6 @@ class GameScene(Scene):
             logger.debug("GameScene.draw - game_ui is None, returning")
             return
 
-        # Update GameUI state to match GameScene state
         winner_name = None
         if self.game_over and self.winner:
             winner_name = self.winner
@@ -281,13 +299,18 @@ class GameScene(Scene):
         logger.debug(f"  player_o_name: {self.player_o_name}")
         logger.debug(f"  winner_name: {winner_name}")
 
-        self.game_ui.update_game_state(board=self.board, current_player=self.current_player.value, game_over=self.game_over, winner=winner_name, player_x_name=self.player_x_name, player_o_name=self.player_o_name)
+        self.game_ui.update_game_state(
+            board=self.board,
+            current_player=self.current_player.value,
+            game_over=self.game_over,
+            winner=winner_name,
+            player_x_name=self.player_x_name,
+            player_o_name=self.player_o_name,
+        )
 
-        # Draw game UI
         logger.debug("GameScene.draw - calling game_ui.render")
         self.game_ui.render(surface)
 
-        # Draw game over overlay if needed
         if self.game_over:
             logger.debug("GameScene.draw - calling _draw_game_over_overlay")
             self._draw_game_over_overlay(surface)
@@ -301,25 +324,28 @@ class GameScene(Scene):
         Args:
             surface: Pygame surface to draw on
         """
-        # Semi-transparent overlay
         overlay = pygame.Surface((self.width, self.height))
         overlay.set_alpha(128)
         overlay.fill((0, 0, 0))
         surface.blit(overlay, (0, 0))
 
-        # Game over message
         if self.winner:
             message = f"{self.winner} wins!"
-            color = (100, 200, 255)  # Blue
+            color = (100, 200, 255)
         else:
             message = "It's a draw!"
-            color = (200, 200, 200)  # Gray
+            color = (200, 200, 200)
 
         game_over_text = self.fonts["title"].render(message, True, color)
-        game_over_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+        game_over_rect = game_over_text.get_rect(
+            center=(self.width // 2, self.height // 2 - 50)
+        )
         surface.blit(game_over_text, game_over_rect)
 
-        # Instructions
-        instructions = self.fonts["ui"].render("Click Back to return to menu", True, (255, 255, 255))
-        instructions_rect = instructions.get_rect(center=(self.width // 2, self.height // 2 + 50))
+        instructions = self.fonts["ui"].render(
+            "Click Back to return to menu", True, (255, 255, 255)
+        )
+        instructions_rect = instructions.get_rect(
+            center=(self.width // 2, self.height // 2 + 50)
+        )
         surface.blit(instructions, instructions_rect)

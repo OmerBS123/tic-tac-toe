@@ -5,6 +5,7 @@ Match history scene for displaying recent games using pygame.
 import pygame
 
 from ..app.scene import Scene
+from ..consts.board_consts import MatchResult
 from ..consts.scene_consts import SceneTransition
 from ..domain.services.history_service import HistoryService
 from ..infra.logger import get_logger
@@ -30,12 +31,10 @@ class MatchHistoryScene(Scene):
         self.storage = storage
         self.manager = HistoryService(storage)
 
-        # Scrolling
         self.scroll_offset = 0
         self.max_scroll = 0
         self.rows_per_page = 15
 
-        # Initialize layout and fonts
         self._on_resize_impl(width, height)
 
         logger.info("MatchHistoryScene initialized")
@@ -45,14 +44,12 @@ class MatchHistoryScene(Scene):
         self.layout = compute_layout(width, height)
         self.fonts = make_fonts(self.layout)
 
-        # Colors
         self.bg_color = (18, 18, 18)
         self.title_color = (100, 200, 255)
         self.text_color = (255, 255, 255)
         self.header_color = (200, 200, 200)
         self.accent_color = (100, 200, 255)
 
-        # Layout calculations
         self.title_y = self.layout.safe_margin
         self.table_start_y = self.title_y + self.layout.font_title + 20
         self.row_height = max(25, int(self.layout.font_ui * 1.2))
@@ -78,7 +75,7 @@ class MatchHistoryScene(Scene):
             elif event.key in (pygame.K_UP, pygame.K_PAGEUP):
                 self._scroll_up()
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+            if event.button == 1:
                 mouse_x, mouse_y = event.pos
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
@@ -106,12 +103,10 @@ class MatchHistoryScene(Scene):
         """
         surface.fill(self.bg_color)
 
-        # Draw title
         title_text = self.fonts["title"].render("MATCH HISTORY", True, self.title_color)
         title_rect = title_text.get_rect(center=(self.width // 2, self.title_y))
         surface.blit(title_text, title_rect)
 
-        # Get history data
         try:
             history_data = self.manager.get_history_data(limit=100)
             self.max_scroll = max(0, len(history_data.rows) - self.rows_per_page)
@@ -120,12 +115,14 @@ class MatchHistoryScene(Scene):
             logger.error(f"Error drawing match history: {e}")
             self._draw_error_message(surface, "Error loading match history")
 
-        # Draw back button
         self._draw_back_button(surface)
 
-        # Draw instructions
-        instructions = self.fonts["small"].render("↑/↓ to scroll • ESC or click Back to return", True, self.header_color)
-        surface.blit(instructions, (self.width - instructions.get_width() - 20, self.height - 30))
+        instructions = self.fonts["small"].render(
+            "↑/↓ to scroll • ESC or click Back to return", True, self.header_color
+        )
+        surface.blit(
+            instructions, (self.width - instructions.get_width() - 20, self.height - 30)
+        )
 
     def _draw_history_table(self, surface: pygame.Surface, data) -> None:
         """
@@ -139,34 +136,39 @@ class MatchHistoryScene(Scene):
             self._draw_no_data_message(surface)
             return
 
-        # Calculate column widths
-        col_widths = [100, 80, 120, 40, 120, 80, 80, 80]  # Date, Time, Player X, vs, Player O, Result, Mode, AI Level
+        col_widths = [100, 80, 120, 40, 120, 80, 80, 80]
         col_x_positions = [self.margin_x]
         for width in col_widths[:-1]:
             col_x_positions.append(col_x_positions[-1] + width)
 
-        # Draw headers
         y = self.table_start_y
         for i, header in enumerate(data.headers):
             header_text = self.fonts["ui"].render(header, True, self.header_color)
             surface.blit(header_text, (col_x_positions[i], y))
 
-        # Draw separator line
-        pygame.draw.line(surface, self.header_color, (self.margin_x, y + self.header_height), (self.width - self.margin_x, y + self.header_height), 2)
+        pygame.draw.line(
+            surface,
+            self.header_color,
+            (self.margin_x, y + self.header_height),
+            (self.width - self.margin_x, y + self.header_height),
+            2,
+        )
 
         y += self.header_height + 10
 
-        # Draw visible rows (with scrolling)
-        visible_rows = data.rows[self.scroll_offset: self.scroll_offset + self.rows_per_page]
+        visible_rows = data.rows[
+            self.scroll_offset : self.scroll_offset + self.rows_per_page
+        ]
         for row in visible_rows:
             self._draw_history_row(surface, row, col_x_positions, y)
             y += self.row_height
 
-        # Draw scroll indicator
         if len(data.rows) > self.rows_per_page:
             self._draw_scroll_indicator(surface, len(data.rows))
 
-    def _draw_history_row(self, surface: pygame.Surface, row, col_x_positions: list, y: int) -> None:
+    def _draw_history_row(
+        self, surface: pygame.Surface, row, col_x_positions: list, y: int
+    ) -> None:
         """
         Draw a single history row.
 
@@ -176,37 +178,35 @@ class MatchHistoryScene(Scene):
             col_x_positions: X positions for each column
             y: Y position for the row
         """
-        # Date
         date_surface = self.fonts["ui"].render(row.date_str, True, self.text_color)
         surface.blit(date_surface, (col_x_positions[0], y))
 
-        # Time
         time_surface = self.fonts["ui"].render(row.time_str, True, self.text_color)
         surface.blit(time_surface, (col_x_positions[1], y))
 
-        # Player X
-        player_x_surface = self.fonts["ui"].render(row.player_x_name, True, self.text_color)
+        player_x_surface = self.fonts["ui"].render(
+            row.player_x_name, True, self.text_color
+        )
         surface.blit(player_x_surface, (col_x_positions[2], y))
 
-        # VS
         vs_surface = self.fonts["ui"].render("vs", True, self.accent_color)
         surface.blit(vs_surface, (col_x_positions[3], y))
 
-        # Player O
-        player_o_surface = self.fonts["ui"].render(row.player_o_name, True, self.text_color)
+        player_o_surface = self.fonts["ui"].render(
+            row.player_o_name, True, self.text_color
+        )
         surface.blit(player_o_surface, (col_x_positions[4], y))
 
-        # Result
         result_color = self._get_result_color(row.result)
         result_surface = self.fonts["ui"].render(row.result, True, result_color)
         surface.blit(result_surface, (col_x_positions[5], y))
 
-        # Mode
         mode_surface = self.fonts["ui"].render(row.mode, True, self.text_color)
         surface.blit(mode_surface, (col_x_positions[6], y))
 
-        # AI Level
-        ai_level_surface = self.fonts["ui"].render(row.ai_level_display, True, self.text_color)
+        ai_level_surface = self.fonts["ui"].render(
+            row.ai_level_display, True, self.text_color
+        )
         surface.blit(ai_level_surface, (col_x_positions[7], y))
 
     def _get_result_color(self, result: str) -> tuple[int, int, int]:
@@ -219,7 +219,7 @@ class MatchHistoryScene(Scene):
         Returns:
             RGB color tuple
         """
-        if result == "Draw":
+        if result == MatchResult.DRAW.value:
             return 200, 200, 200
         else:
             return 100, 200, 255
@@ -232,19 +232,26 @@ class MatchHistoryScene(Scene):
             surface: Pygame surface to draw on
             total_rows: Total number of rows
         """
-        # Calculate scroll bar position
         scroll_height = 200
         scroll_y = self.height - scroll_height - 50
         scroll_width = 20
 
-        # Background
-        pygame.draw.rect(surface, (50, 50, 50), (self.width - scroll_width - 20, scroll_y, scroll_width, scroll_height))
+        pygame.draw.rect(
+            surface,
+            (50, 50, 50),
+            (self.width - scroll_width - 20, scroll_y, scroll_width, scroll_height),
+        )
 
-        # Scroll thumb
         thumb_height = max(20, int(scroll_height * self.rows_per_page / total_rows))
-        thumb_y = scroll_y + int((scroll_height - thumb_height) * self.scroll_offset / self.max_scroll)
+        thumb_y = scroll_y + int(
+            (scroll_height - thumb_height) * self.scroll_offset / self.max_scroll
+        )
 
-        pygame.draw.rect(surface, self.accent_color, (self.width - scroll_width - 20, thumb_y, scroll_width, thumb_height))
+        pygame.draw.rect(
+            surface,
+            self.accent_color,
+            (self.width - scroll_width - 20, thumb_y, scroll_width, thumb_height),
+        )
 
     def _draw_no_data_message(self, surface: pygame.Surface) -> None:
         """
@@ -253,7 +260,9 @@ class MatchHistoryScene(Scene):
         Args:
             surface: Pygame surface to draw on
         """
-        message = self.fonts["ui"].render("No matches played yet!", True, self.header_color)
+        message = self.fonts["ui"].render(
+            "No matches played yet!", True, self.header_color
+        )
         message_rect = message.get_rect(center=(self.width // 2, self.height // 2))
         surface.blit(message, message_rect)
 
@@ -281,17 +290,29 @@ class MatchHistoryScene(Scene):
         button_x = 20
         button_y = self.height - 70
 
-        # Draw button background with rounded corners
-        pygame.draw.rect(surface, (80, 80, 80), (button_x, button_y, button_width, button_height), border_radius=8)
-        pygame.draw.rect(surface, (120, 120, 120), (button_x, button_y, button_width, button_height), width=2, border_radius=8)
+        pygame.draw.rect(
+            surface,
+            (80, 80, 80),
+            (button_x, button_y, button_width, button_height),
+            border_radius=8,
+        )
+        pygame.draw.rect(
+            surface,
+            (120, 120, 120),
+            (button_x, button_y, button_width, button_height),
+            width=2,
+            border_radius=8,
+        )
 
-        # Draw button text with larger font
         back_text = self.fonts["ui"].render("Back", True, self.text_color)
-        text_rect = back_text.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
+        text_rect = back_text.get_rect(
+            center=(button_x + button_width // 2, button_y + button_height // 2)
+        )
         surface.blit(back_text, text_rect)
 
-        # Store button rect for click detection
-        self.back_button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+        self.back_button_rect = pygame.Rect(
+            button_x, button_y, button_width, button_height
+        )
 
     def _is_back_button_clicked(self, mouse_x: int, mouse_y: int) -> bool:
         """
@@ -304,4 +325,6 @@ class MatchHistoryScene(Scene):
         Returns:
             True if back button was clicked
         """
-        return hasattr(self, "back_button_rect") and self.back_button_rect.collidepoint(mouse_x, mouse_y)
+        return hasattr(self, "back_button_rect") and self.back_button_rect.collidepoint(
+            mouse_x, mouse_y
+        )

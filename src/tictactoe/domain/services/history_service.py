@@ -5,6 +5,7 @@ Match history screen logic for displaying recent games.
 from datetime import datetime
 from typing import Any
 
+from ...consts.board_consts import MatchResult
 from ...infra.logger import get_logger
 from ...infra.storage import Storage
 from ..models import HistoryData, HistoryRow, MatchRecord
@@ -25,7 +26,9 @@ class HistoryService:
         self.storage = storage
         logger.debug("HistoryManager initialized")
 
-    def get_recent_matches(self, limit: int = 50, filter_mode: str | None = None) -> list[MatchRecord]:
+    def get_recent_matches(
+        self, limit: int = 50, filter_mode: str | None = None
+    ) -> list[MatchRecord]:
         """
         Get recent matches with optional filtering.
 
@@ -40,7 +43,9 @@ class HistoryService:
         logger.info(f"Retrieved {len(matches)} recent matches (filter: {filter_mode})")
         return matches
 
-    def get_history_data(self, limit: int = 50, filter_mode: str | None = None) -> HistoryData:
+    def get_history_data(
+        self, limit: int = 50, filter_mode: str | None = None
+    ) -> HistoryData:
         """
         Get match history data structured for pygame rendering.
 
@@ -59,15 +64,16 @@ class HistoryService:
             date_str = played_at.strftime("%Y-%m-%d")
             time_str = played_at.strftime("%H:%M")
 
-            # Convert result character to player name
-            if match.result == "X":
-                result_display = match.player_x_name
-            elif match.result == "O":
-                result_display = match.player_o_name
-            else:  # Draw
-                result_display = "Draw"
+            match match.result:
+                case MatchResult.X_WIN.value:
+                    result_display = match.player_x_name
+                case MatchResult.O_WIN.value:
+                    result_display = match.player_o_name
+                case MatchResult.DRAW.value:
+                    result_display = "Draw"
+                case _:
+                    result_display = "Unknown"
 
-            # Use dash instead of N/A for AI level
             ai_level_display = match.ai_level or "-"
 
             row = HistoryRow(
@@ -76,14 +82,23 @@ class HistoryService:
                 time_str=time_str,
                 player_x_name=match.player_x_name,
                 player_o_name=match.player_o_name,
-                result=result_display,  # Use player name instead of character
+                result=result_display,
                 mode=match.mode.upper(),
                 ai_level=match.ai_level,
                 ai_level_display=ai_level_display,
             )
             rows.append(row)
 
-        headers = ["Date", "Time", "Player X", "vs", "Player O", "Result", "Mode", "AI Level"]
+        headers = [
+            "Date",
+            "Time",
+            "Player X",
+            "vs",
+            "Player O",
+            "Result",
+            "Mode",
+            "AI Level",
+        ]
 
         filter_display = None
         if filter_mode == "pvp":
@@ -91,9 +106,17 @@ class HistoryService:
         elif filter_mode in ("easy", "medium", "hard"):
             filter_display = f"AI-{filter_mode.title()} Only"
 
-        return HistoryData(title="MATCH HISTORY", headers=headers, rows=rows, total_matches=len(rows), filter_applied=filter_display)
+        return HistoryData(
+            title="MATCH HISTORY",
+            headers=headers,
+            rows=rows,
+            total_matches=len(rows),
+            filter_applied=filter_display,
+        )
 
-    def get_matches_for_player(self, player_name: str, limit: int = 20) -> list[MatchRecord]:
+    def get_matches_for_player(
+        self, player_name: str, limit: int = 20
+    ) -> list[MatchRecord]:
         """
         Get matches for a specific player.
 
@@ -105,7 +128,12 @@ class HistoryService:
             List of MatchRecord for the player
         """
         all_matches = self.get_recent_matches(limit * 2)
-        player_matches = [match for match in all_matches if match.player_x_name.lower() == player_name.lower() or match.player_o_name.lower() == player_name.lower()]
+        player_matches = [
+            match
+            for match in all_matches
+            if match.player_x_name.lower() == player_name.lower()
+            or match.player_o_name.lower() == player_name.lower()
+        ]
 
         logger.debug(f"Found {len(player_matches)} matches for player: {player_name}")
         return player_matches[:limit]
@@ -123,7 +151,16 @@ class HistoryService:
         matches = self.get_matches_for_player(player_name, 1000)
 
         if not matches:
-            return {"name": player_name, "total_matches": 0, "wins": 0, "losses": 0, "draws": 0, "win_percentage": 0.0, "pvp_matches": 0, "pvai_matches": 0}
+            return {
+                "name": player_name,
+                "total_matches": 0,
+                "wins": 0,
+                "losses": 0,
+                "draws": 0,
+                "win_percentage": 0.0,
+                "pvp_matches": 0,
+                "pvai_matches": 0,
+            }
 
         wins = 0
         losses = 0
@@ -137,17 +174,35 @@ class HistoryService:
             else:
                 pvai_matches += 1
 
-            if match.result == "Draw":
-                draws += 1
-            elif (match.result == "X" and match.player_x_name.lower() == player_name.lower()) or (match.result == "O" and match.player_o_name.lower() == player_name.lower()):
-                wins += 1
-            else:
-                losses += 1
+            match match.result:
+                case MatchResult.DRAW.value:
+                    draws += 1
+                case MatchResult.X_WIN.value:
+                    if match.player_x_name.lower() == player_name.lower():
+                        wins += 1
+                    else:
+                        losses += 1
+                case MatchResult.O_WIN.value:
+                    if match.player_o_name.lower() == player_name.lower():
+                        wins += 1
+                    else:
+                        losses += 1
+                case _:
+                    logger.warning(f"Unknown match result: {match.result}")
 
         total_matches = len(matches)
         win_percentage = (wins / total_matches * 100) if total_matches > 0 else 0.0
 
-        return {"name": player_name, "total_matches": total_matches, "wins": wins, "losses": losses, "draws": draws, "win_percentage": round(win_percentage, 1), "pvp_matches": pvp_matches, "pvai_matches": pvai_matches}
+        return {
+            "name": player_name,
+            "total_matches": total_matches,
+            "wins": wins,
+            "losses": losses,
+            "draws": draws,
+            "win_percentage": round(win_percentage, 1),
+            "pvp_matches": pvp_matches,
+            "pvai_matches": pvai_matches,
+        }
 
     @staticmethod
     def get_filter_options() -> list[str]:
@@ -170,6 +225,12 @@ class HistoryService:
         Returns:
             Storage filter mode or None for "All"
         """
-        filter_mapping = {"All": None, "PvP": "pvp", "AI-Easy": "easy", "AI-Medium": "medium", "AI-Hard": "hard"}
+        filter_mapping = {
+            "All": None,
+            "PvP": "pvp",
+            "AI-Easy": "easy",
+            "AI-Medium": "medium",
+            "AI-Hard": "hard",
+        }
 
         return filter_mapping.get(filter_option, None)

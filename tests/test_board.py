@@ -96,7 +96,9 @@ class TestBoard:
         board = Board()
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
-                player = Player.X_PLAYER.value if (i + j) % 2 == 0 else Player.O_PLAYER.value
+                player = (
+                    Player.X_PLAYER.value if (i + j) % 2 == 0 else Player.O_PLAYER.value
+                )
                 board.apply((i, j), player)
         assert board.terminal() is True
 

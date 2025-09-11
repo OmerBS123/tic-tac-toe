@@ -100,7 +100,9 @@ class TestStorage:
             assert count == 1
 
             # noinspection SqlResolve
-            cursor.execute("SELECT player_x_id, player_o_id, result, mode, ai_level FROM matches")
+            cursor.execute(
+                "SELECT player_x_id, player_o_id, result, mode, ai_level FROM matches"
+            )
             result = cursor.fetchone()
 
             assert result[2] == "X"
@@ -122,7 +124,9 @@ class TestStorage:
             assert count == 1
 
             # noinspection SqlResolve
-            cursor.execute("SELECT player_x_id, player_o_id, result, mode, ai_level FROM matches")
+            cursor.execute(
+                "SELECT player_x_id, player_o_id, result, mode, ai_level FROM matches"
+            )
             result = cursor.fetchone()
 
             assert result[2] == "O"
@@ -335,7 +339,16 @@ class TestStorage:
 
     def test_player_stats_namedtuple(self) -> None:
         """Test PlayerStats NamedTuple structure."""
-        stats = PlayerStats(name="Alice", total_wins=5, pvp_wins=3, ai_easy_wins=1, ai_medium_wins=1, ai_hard_wins=0, win_percentage=0.83, total_games=6)
+        stats = PlayerStats(
+            name="Alice",
+            total_wins=5,
+            pvp_wins=3,
+            ai_easy_wins=1,
+            ai_medium_wins=1,
+            ai_hard_wins=0,
+            win_percentage=0.83,
+            total_games=6,
+        )
 
         assert stats.name == "Alice"
         assert stats.total_wins == 5
@@ -348,7 +361,14 @@ class TestStorage:
 
     def test_match_record_namedtuple(self) -> None:
         """Test MatchRecord NamedTuple structure."""
-        match = MatchRecord(played_at="2025-09-06T15:30:00", player_x_name="Alice", player_o_name="Bob", result="X", mode="pvp", ai_level=None)
+        match = MatchRecord(
+            played_at="2025-09-06T15:30:00",
+            player_x_name="Alice",
+            player_o_name="Bob",
+            result="X",
+            mode="pvp",
+            ai_level=None,
+        )
 
         assert match.played_at == "2025-09-06T15:30:00"
         assert match.player_x_name == "Alice"

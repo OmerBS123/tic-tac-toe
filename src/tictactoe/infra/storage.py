@@ -77,12 +77,17 @@ class Storage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("SELECT id FROM players WHERE LOWER(name) = LOWER(?)", (normalized_name,))
+            cursor.execute(
+                "SELECT id FROM players WHERE LOWER(name) = LOWER(?)",
+                (normalized_name,),
+            )
             result = cursor.fetchone()
 
             if result:
                 player_id = result[0]
-                logger.debug(f"Found existing player: {normalized_name} (ID: {player_id})")
+                logger.debug(
+                    f"Found existing player: {normalized_name} (ID: {player_id})"
+                )
                 return player_id
 
             cursor.execute("INSERT INTO players (name) VALUES (?)", (normalized_name,))
@@ -92,7 +97,14 @@ class Storage:
             logger.info(f"Created new player: {normalized_name} (ID: {player_id})")
             return player_id
 
-    def record_match(self, player_x: str, player_o: str, result: str, mode: str, ai_level: str | None = None) -> None:
+    def record_match(
+        self,
+        player_x: str,
+        player_o: str,
+        result: str,
+        mode: str,
+        ai_level: str | None = None,
+    ) -> None:
         """
         Record a completed match.
 
@@ -131,7 +143,9 @@ class Storage:
 
             conn.commit()
 
-            logger.info(f"Recorded match: {player_x} vs {player_o} → {result} ({mode}/{ai_level or 'N/A'})")
+            logger.info(
+                f"Recorded match: {player_x} vs {player_o} → {result} ({mode}/{ai_level or 'N/A'})"
+            )
 
     def leaderboard(self, limit: int = 50) -> list[PlayerStats]:
         """
@@ -213,12 +227,26 @@ class Storage:
             cursor.execute(query, (limit,))
             results = cursor.fetchall()
 
-            leaderboard_data = [PlayerStats(name=row[0], total_wins=row[1], pvp_wins=row[2], ai_easy_wins=row[3], ai_medium_wins=row[4], ai_hard_wins=row[5], win_percentage=row[6], total_games=row[7]) for row in results]
+            leaderboard_data = [
+                PlayerStats(
+                    name=row[0],
+                    total_wins=row[1],
+                    pvp_wins=row[2],
+                    ai_easy_wins=row[3],
+                    ai_medium_wins=row[4],
+                    ai_hard_wins=row[5],
+                    win_percentage=row[6],
+                    total_games=row[7],
+                )
+                for row in results
+            ]
 
             logger.debug(f"Retrieved leaderboard with {len(leaderboard_data)} players")
             return leaderboard_data
 
-    def recent_matches(self, limit: int = 50, filter_mode: str | None = None) -> list[MatchRecord]:
+    def recent_matches(
+        self, limit: int = 50, filter_mode: str | None = None
+    ) -> list[MatchRecord]:
         """
         Get recent matches with optional filtering.
 
@@ -260,9 +288,21 @@ class Storage:
             cursor.execute(query, params)
             results = cursor.fetchall()
 
-            match_data = [MatchRecord(played_at=row[0], player_x_name=row[1], player_o_name=row[2], result=row[3], mode=row[4], ai_level=row[5]) for row in results]
+            match_data = [
+                MatchRecord(
+                    played_at=row[0],
+                    player_x_name=row[1],
+                    player_o_name=row[2],
+                    result=row[3],
+                    mode=row[4],
+                    ai_level=row[5],
+                )
+                for row in results
+            ]
 
-            logger.debug(f"Retrieved {len(match_data)} recent matches (filter: {filter_mode})")
+            logger.debug(
+                f"Retrieved {len(match_data)} recent matches (filter: {filter_mode})"
+            )
             return match_data
 
     def reset_data(self) -> None:
@@ -297,7 +337,13 @@ class Storage:
             cursor.execute("SELECT COUNT(*) FROM matches WHERE result = 'Draw'")
             draws = cursor.fetchone()[0]
 
-            return {"total_players": total_players, "total_matches": total_matches, "pvp_matches": pvp_matches, "pvai_matches": pvai_matches, "draws": draws}
+            return {
+                "total_players": total_players,
+                "total_matches": total_matches,
+                "pvp_matches": pvp_matches,
+                "pvai_matches": pvai_matches,
+                "draws": draws,
+            }
 
     def _get_all_players(self) -> list[str]:
         """Get all player names (for testing)."""
@@ -319,4 +365,7 @@ class Storage:
                 ORDER BY m.played_at DESC
             """
             )
-            return [f"{row[0]} vs {row[1]}: {row[2]} ({row[3]}/{row[4] or 'N/A'})" for row in cursor.fetchall()]
+            return [
+                f"{row[0]} vs {row[1]}: {row[2]} ({row[3]}/{row[4] or 'N/A'})"
+                for row in cursor.fetchall()
+            ]

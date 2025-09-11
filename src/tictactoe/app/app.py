@@ -31,16 +31,13 @@ class TicTacToeApp:
         self.width = width
         self.height = height
 
-        # Initialize pygame
         pygame.init()
         self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
         pygame.display.set_caption("Tic Tac Toe")
 
-        # Initialize components
         self.storage = Storage()
         self.scene_manager = None
 
-        # Create scene manager with callbacks
         self._create_scene_manager()
 
         logger.info("TicTacToeApp initialized")
@@ -80,34 +77,28 @@ class TicTacToeApp:
             difficulty: AI difficulty level
         """
         logger.info(f"Starting PvAI game: {player_name} vs AI ({difficulty})")
-        # Convert string to Difficulty enum
         try:
             ai_difficulty = Difficulty(difficulty)
             self.scene_manager.start_pvai_game(player_name, ai_difficulty)
         except ValueError:
             logger.error(f"Invalid difficulty level: {difficulty}")
-            # Default to medium difficulty
             self.scene_manager.start_pvai_game(player_name, Difficulty.MEDIUM)
 
     def _show_leaderboard(self) -> None:
         """Show leaderboard screen."""
         logger.info("Showing leaderboard")
-        # Scene manager will handle the transition
 
     def _show_history(self) -> None:
         """Show match history screen."""
         logger.info("Showing match history")
-        # Scene manager will handle the transition
 
     def _reset_data(self) -> None:
         """Show reset confirmation screen."""
         logger.info("Showing reset confirmation")
-        # Scene manager will handle the transition
 
     def _quit_game(self) -> None:
         """Quit the application."""
         logger.info("Quitting game")
-        # Don't call pygame.quit() here - let the main loop handle it
 
     def run(self) -> None:
         """Main application loop."""
@@ -125,7 +116,6 @@ class TicTacToeApp:
             events = pygame.event.get()
             logger.debug(f"App.run - got {len(events)} events")
 
-            # Handle events
             for event in events:
                 logger.debug(f"App.run - processing event: {event.type}")
 
@@ -144,7 +134,6 @@ class TicTacToeApp:
                 logger.debug("App.run - breaking due to QUIT")
                 break
 
-            # Handle scene manager events
             for event in events:
                 logger.debug(f"App.run - passing event to scene manager: {event.type}")
                 result = self.scene_manager.handle_event(event)
@@ -155,12 +144,11 @@ class TicTacToeApp:
                 elif result:
                     logger.debug(f"App.run - scene transition: {result}")
 
-            # Draw current scene
             logger.debug("App.run - calling scene_manager.draw")
             self.scene_manager.draw(self.screen)
 
             pygame.display.flip()
-            clock.tick(60)  # 60 FPS
+            clock.tick(60)
 
         logger.info("Application loop ended")
         logger.debug("App.run END")
@@ -173,7 +161,6 @@ class TicTacToeApp:
             self.height = height
             self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
-            # Update scene manager
             if self.scene_manager:
                 self.scene_manager.on_resize(width, height)
 
@@ -185,18 +172,19 @@ class TicTacToeApp:
         is_fullscreen = bool(flags & pygame.FULLSCREEN)
 
         if is_fullscreen:
-            # Exit fullscreen mode
-            self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+            self.screen = pygame.display.set_mode(
+                (self.width, self.height), pygame.RESIZABLE
+            )
         else:
-            # Enter fullscreen mode
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             self.width, self.height = self.screen.get_size()
 
-        # Update scene manager
         if self.scene_manager:
             self.scene_manager.on_resize(self.width, self.height)
 
-        logger.info(f"Toggled fullscreen: {not is_fullscreen}, size: {self.width}x{self.height}")
+        logger.info(
+            f"Toggled fullscreen: {not is_fullscreen}, size: {self.width}x{self.height}"
+        )
 
 
 def main() -> None:

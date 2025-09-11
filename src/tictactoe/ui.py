@@ -43,8 +43,8 @@ class GameUI:
         pygame.display.set_caption("Tic Tac Toe")
         self.clock = pygame.time.Clock()
 
-        # Font for X and O
         self.font = pygame.font.Font(None, self.cell_size // 2)
+        self.status_font = pygame.font.Font(None, self.cell_size // 3)
 
         # Game state
         self.board = Board()
@@ -324,8 +324,8 @@ class GameUI:
 
         pygame.draw.line(self.screen, self.BOARD_COLOR, (0, line_y), (self.width, line_y), 2)
 
-        # Render text
-        text_surface = self.font.render(status_text, True, self.BOARD_COLOR)
+        # Render text with smaller font
+        text_surface = self.status_font.render(status_text, True, self.BOARD_COLOR)
         text_rect = text_surface.get_rect(center=(self.width // 2, text_y))
         self.screen.blit(text_surface, text_rect)
 

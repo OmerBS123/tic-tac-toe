@@ -12,3 +12,6 @@ wheels/
 # Log files
 logs/
 *.log
+
+# Game runner script
+run_game.py

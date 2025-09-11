@@ -205,12 +205,15 @@ class GameUI:
 
     def _draw_board(self) -> None:
         """Draw the game board grid."""
-        # Draw vertical lines
+        board_height = self.board_size * self.cell_size
+        line_y = board_height + 20
+
+        # Draw vertical lines (extend to separation line)
         for i in range(1, self.board_size):
             x = i * self.cell_size
-            pygame.draw.line(self.screen, self.BOARD_COLOR, (x, 0), (x, self.height), 3)
+            pygame.draw.line(self.screen, self.BOARD_COLOR, (x, 0), (x, line_y), 3)
 
-        # Draw horizontal lines
+        # Draw horizontal lines (only within the board area)
         for i in range(1, self.board_size):
             y = i * self.cell_size
             pygame.draw.line(self.screen, self.BOARD_COLOR, (0, y), (self.width, y), 3)
@@ -316,7 +319,10 @@ class GameUI:
 
         # Position text below the board area
         board_height = self.board_size * self.cell_size
-        text_y = board_height + 40  # 40 pixels below the board
+        line_y = board_height + 20
+        text_y = board_height + 70  # Moved further down for more breathing room
+
+        pygame.draw.line(self.screen, self.BOARD_COLOR, (0, line_y), (self.width, line_y), 2)
 
         # Render text
         text_surface = self.font.render(status_text, True, self.BOARD_COLOR)

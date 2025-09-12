@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from tictactoe.ai import AI
 from tictactoe.board import Board
-from tictactoe.consts.ai_consts import Difficulty, Depth, INFINITY, NEGATIVE_INFINITY
+from tictactoe.consts.ai_consts import INFINITY, NEGATIVE_INFINITY, Depth, Difficulty
 from tictactoe.consts.board_consts import Player
 
 
@@ -89,7 +89,9 @@ class TestAI:
         board.apply((0, 1), Player.O_PLAYER.value)
         board.apply((0, 2), Player.O_PLAYER.value)
 
-        score = ai.minimax(board, depth=5, is_max=True, alpha=NEGATIVE_INFINITY, beta=INFINITY)
+        score = ai.minimax(
+            board, depth=5, is_max=True, alpha=NEGATIVE_INFINITY, beta=INFINITY
+        )
         assert score == 10
 
     def test_minimax_depth_zero(self) -> None:
@@ -99,7 +101,9 @@ class TestAI:
 
         with patch.object(board, "evaluate") as mock_evaluate:
             mock_evaluate.return_value = 3
-            score = ai.minimax(board, depth=0, is_max=True, alpha=NEGATIVE_INFINITY, beta=INFINITY)
+            score = ai.minimax(
+                board, depth=0, is_max=True, alpha=NEGATIVE_INFINITY, beta=INFINITY
+            )
             assert score == 3
             mock_evaluate.assert_called_once()
 
@@ -116,7 +120,13 @@ class TestAI:
                     with patch.object(board, "evaluate") as mock_evaluate:
                         mock_evaluate.return_value = 5
 
-                        score = ai.minimax(board, depth=1, is_max=True, alpha=NEGATIVE_INFINITY, beta=INFINITY)
+                        score = ai.minimax(
+                            board,
+                            depth=1,
+                            is_max=True,
+                            alpha=NEGATIVE_INFINITY,
+                            beta=INFINITY,
+                        )
 
                         assert score == 5
                         mock_apply.assert_called()
@@ -135,7 +145,13 @@ class TestAI:
                     with patch.object(board, "evaluate") as mock_evaluate:
                         mock_evaluate.return_value = -3
 
-                        score = ai.minimax(board, depth=1, is_max=False, alpha=NEGATIVE_INFINITY, beta=INFINITY)
+                        score = ai.minimax(
+                            board,
+                            depth=1,
+                            is_max=False,
+                            alpha=NEGATIVE_INFINITY,
+                            beta=INFINITY,
+                        )
 
                         assert score == -3
                         mock_apply.assert_called()
@@ -154,7 +170,9 @@ class TestAI:
                     with patch.object(ai, "minimax") as mock_minimax:
                         mock_minimax.side_effect = [10, 5]
 
-                        score = ai.minimax(board, depth=2, is_max=True, alpha=10, beta=INFINITY)
+                        score = ai.minimax(
+                            board, depth=2, is_max=True, alpha=10, beta=INFINITY
+                        )
 
                         assert score == 10
                         assert mock_minimax.call_count == 1

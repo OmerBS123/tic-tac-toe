@@ -84,13 +84,13 @@ class GameSettings(NamedTuple):
     player_x_name: str
     player_o_name: str
     ai_difficulty: str
-    game_mode: str  # "pvp" or "pvai"
+    game_mode: str
 
 
 class GameResult(NamedTuple):
     """Result of a completed game."""
 
-    winner: int | None  # 0 for X, 1 for O, None for draw
+    winner: int | None
     player_x_name: str
     player_o_name: str
     mode: str

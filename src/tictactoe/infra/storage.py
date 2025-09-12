@@ -77,12 +77,17 @@ class Storage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("SELECT id FROM players WHERE LOWER(name) = LOWER(?)", (normalized_name,))
+            cursor.execute(
+                "SELECT id FROM players WHERE LOWER(name) = LOWER(?)",
+                (normalized_name,),
+            )
             result = cursor.fetchone()
 
             if result:
                 player_id = result[0]
-                logger.debug(f"Found existing player: {normalized_name} (ID: {player_id})")
+                logger.debug(
+                    f"Found existing player: {normalized_name} (ID: {player_id})"
+                )
                 return player_id
 
             cursor.execute("INSERT INTO players (name) VALUES (?)", (normalized_name,))
@@ -92,7 +97,14 @@ class Storage:
             logger.info(f"Created new player: {normalized_name} (ID: {player_id})")
             return player_id
 
-    def record_match(self, player_x: str, player_o: str, result: str, mode: str, ai_level: str | None = None) -> None:
+    def record_match(
+        self,
+        player_x: str,
+        player_o: str,
+        result: str,
+        mode: str,
+        ai_level: str | None = None,
+    ) -> None:
         """
         Record a completed match.
 
@@ -131,7 +143,9 @@ class Storage:
 
             conn.commit()
 
-            logger.info(f"Recorded match: {player_x} vs {player_o} → {result} ({mode}/{ai_level or 'N/A'})")
+            logger.info(
+                f"Recorded match: {player_x} vs {player_o} → {result} ({mode}/{ai_level or 'N/A'})"
+            )
 
     def leaderboard(self, limit: int = 50) -> list[PlayerStats]:
         """
@@ -148,61 +162,61 @@ class Storage:
 
             query = """
                 WITH player_wins AS (
-                    SELECT 
+                    SELECT
                         p.id,
                         p.name,
-                        COUNT(CASE 
-                            WHEN (m.result = 'X' AND m.player_x_id = p.id) OR 
-                                 (m.result = 'O' AND m.player_o_id = p.id) 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN (m.result = 'X' AND m.player_x_id = p.id) OR
+                                 (m.result = 'O' AND m.player_o_id = p.id)
+                            THEN 1
                         END) as total_wins,
-                        COUNT(CASE 
-                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR 
-                                  (m.result = 'O' AND m.player_o_id = p.id)) 
-                                 AND m.mode = 'pvp' 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR
+                                  (m.result = 'O' AND m.player_o_id = p.id))
+                                 AND m.mode = 'pvp'
+                            THEN 1
                         END) as pvp_wins,
-                        COUNT(CASE 
-                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR 
-                                  (m.result = 'O' AND m.player_o_id = p.id)) 
-                                 AND m.mode = 'pvai' AND m.ai_level = 'easy' 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR
+                                  (m.result = 'O' AND m.player_o_id = p.id))
+                                 AND m.mode = 'pvai' AND m.ai_level = 'easy'
+                            THEN 1
                         END) as ai_easy_wins,
-                        COUNT(CASE 
-                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR 
-                                  (m.result = 'O' AND m.player_o_id = p.id)) 
-                                 AND m.mode = 'pvai' AND m.ai_level = 'medium' 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR
+                                  (m.result = 'O' AND m.player_o_id = p.id))
+                                 AND m.mode = 'pvai' AND m.ai_level = 'medium'
+                            THEN 1
                         END) as ai_medium_wins,
-                        COUNT(CASE 
-                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR 
-                                  (m.result = 'O' AND m.player_o_id = p.id)) 
-                                 AND m.mode = 'pvai' AND m.ai_level = 'hard' 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN ((m.result = 'X' AND m.player_x_id = p.id) OR
+                                  (m.result = 'O' AND m.player_o_id = p.id))
+                                 AND m.mode = 'pvai' AND m.ai_level = 'hard'
+                            THEN 1
                         END) as ai_hard_wins,
-                        COUNT(CASE 
-                            WHEN m.player_x_id = p.id OR m.player_o_id = p.id 
-                            THEN 1 
+                        COUNT(CASE
+                            WHEN m.player_x_id = p.id OR m.player_o_id = p.id
+                            THEN 1
                         END) as total_games
                     FROM players p
                     LEFT JOIN matches m ON (m.player_x_id = p.id OR m.player_o_id = p.id)
                     GROUP BY p.id, p.name
                 )
-                SELECT 
+                SELECT
                     name,
                     total_wins,
                     pvp_wins,
                     ai_easy_wins,
                     ai_medium_wins,
                     ai_hard_wins,
-                    CASE 
+                    CASE
                         WHEN total_games > 0 THEN ROUND(CAST(total_wins AS FLOAT) / total_games * 100, 1)
                         ELSE 0.0
                     END as win_percentage,
                     total_games
                 FROM player_wins
                 WHERE total_games > 0
-                ORDER BY 
+                ORDER BY
                     total_wins DESC,
                     pvp_wins DESC,
                     (ai_easy_wins + ai_medium_wins + ai_hard_wins) DESC,
@@ -213,12 +227,26 @@ class Storage:
             cursor.execute(query, (limit,))
             results = cursor.fetchall()
 
-            leaderboard_data = [PlayerStats(name=row[0], total_wins=row[1], pvp_wins=row[2], ai_easy_wins=row[3], ai_medium_wins=row[4], ai_hard_wins=row[5], win_percentage=row[6], total_games=row[7]) for row in results]
+            leaderboard_data = [
+                PlayerStats(
+                    name=row[0],
+                    total_wins=row[1],
+                    pvp_wins=row[2],
+                    ai_easy_wins=row[3],
+                    ai_medium_wins=row[4],
+                    ai_hard_wins=row[5],
+                    win_percentage=row[6],
+                    total_games=row[7],
+                )
+                for row in results
+            ]
 
             logger.debug(f"Retrieved leaderboard with {len(leaderboard_data)} players")
             return leaderboard_data
 
-    def recent_matches(self, limit: int = 50, filter_mode: str | None = None) -> list[MatchRecord]:
+    def recent_matches(
+        self, limit: int = 50, filter_mode: str | None = None
+    ) -> list[MatchRecord]:
         """
         Get recent matches with optional filtering.
 
@@ -233,7 +261,7 @@ class Storage:
             cursor = conn.cursor()
 
             base_query = """
-                SELECT 
+                SELECT
                     m.played_at,
                     px.name as player_x_name,
                     po.name as player_o_name,
@@ -260,9 +288,21 @@ class Storage:
             cursor.execute(query, params)
             results = cursor.fetchall()
 
-            match_data = [MatchRecord(played_at=row[0], player_x_name=row[1], player_o_name=row[2], result=row[3], mode=row[4], ai_level=row[5]) for row in results]
+            match_data = [
+                MatchRecord(
+                    played_at=row[0],
+                    player_x_name=row[1],
+                    player_o_name=row[2],
+                    result=row[3],
+                    mode=row[4],
+                    ai_level=row[5],
+                )
+                for row in results
+            ]
 
-            logger.debug(f"Retrieved {len(match_data)} recent matches (filter: {filter_mode})")
+            logger.debug(
+                f"Retrieved {len(match_data)} recent matches (filter: {filter_mode})"
+            )
             return match_data
 
     def reset_data(self) -> None:
@@ -297,4 +337,35 @@ class Storage:
             cursor.execute("SELECT COUNT(*) FROM matches WHERE result = 'Draw'")
             draws = cursor.fetchone()[0]
 
-            return {"total_players": total_players, "total_matches": total_matches, "pvp_matches": pvp_matches, "pvai_matches": pvai_matches, "draws": draws}
+            return {
+                "total_players": total_players,
+                "total_matches": total_matches,
+                "pvp_matches": pvp_matches,
+                "pvai_matches": pvai_matches,
+                "draws": draws,
+            }
+
+    def _get_all_players(self) -> list[str]:
+        """Get all player names (for testing)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM players ORDER BY name")
+            return [row[0] for row in cursor.fetchall()]
+
+    def _get_all_matches(self) -> list[str]:
+        """Get all matches as strings (for testing)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT px.name, po.name, m.result, m.mode, m.ai_level, m.played_at
+                FROM matches m
+                JOIN players px ON m.player_x_id = px.id
+                JOIN players po ON m.player_o_id = po.id
+                ORDER BY m.played_at DESC
+            """
+            )
+            return [
+                f"{row[0]} vs {row[1]}: {row[2]} ({row[3]}/{row[4] or 'N/A'})"
+                for row in cursor.fetchall()
+            ]

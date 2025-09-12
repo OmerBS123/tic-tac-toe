@@ -21,3 +21,11 @@ class Score(Enum):
     WIN = 10
     LOSE = -10
     DRAW = 0
+
+
+class MatchResult(Enum):
+    """Match result constants."""
+
+    X_WIN = "X"
+    O_WIN = "O"
+    DRAW = "Draw"

@@ -39,7 +39,13 @@ class Board:
             True if move was valid and applied, False otherwise
         """
         row, col = move
-        player_name = "X" if player == Player.X_PLAYER.value else "O" if player == Player.O_PLAYER.value else "Unknown"
+        player_name = (
+            "X"
+            if player == Player.X_PLAYER.value
+            else "O"
+            if player == Player.O_PLAYER.value
+            else "Unknown"
+        )
 
         if not self.is_valid_move(move):
             logger.warning(f"Invalid move attempted: {player_name} at ({row}, {col})")
@@ -305,7 +311,11 @@ class Board:
 
     def __str__(self) -> str:
         """String representation of the board for debugging."""
-        symbols = {Player.EMPTY.value: " ", Player.X_PLAYER.value: "X", Player.O_PLAYER.value: "O"}
+        symbols = {
+            Player.EMPTY.value: " ",
+            Player.X_PLAYER.value: "X",
+            Player.O_PLAYER.value: "O",
+        }
         lines = []
         for row in self.board:
             lines.append(" | ".join(symbols[cell] for cell in row))

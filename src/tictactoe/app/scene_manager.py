@@ -3,7 +3,6 @@ Scene manager for coordinating all game scenes.
 """
 
 from collections.abc import Callable
-from typing import Any
 
 import pygame
 
@@ -66,21 +65,18 @@ class SceneManager:
         self.width = width
         self.height = height
 
-        # Initialize all scenes
         self.main_menu_scene = MainMenuScene(storage, width, height)
         self.leaderboard_scene = LeaderboardScene(storage, width, height)
         self.history_scene = MatchHistoryScene(storage, width, height)
         self.reset_scene = ResetScene(storage, width, height)
-        self.game_scene = GameScene(width, height)
+        self.game_scene = GameScene(storage, width, height)
 
-        # Current scene
         self.current_scene = "main_menu"
 
         logger.info("SceneManager initialized")
 
     def set_callbacks(self, callbacks: MenuCallbacks) -> None:
         """Set callbacks for all scenes."""
-        # Set main menu callbacks
         self.main_menu_scene.set_callbacks(
             play_pvp=callbacks.play_pvp,
             play_vs_ai=callbacks.play_vs_ai,
@@ -114,7 +110,6 @@ class SceneManager:
             case _:
                 result = None
 
-        # Handle scene transitions
         if result:
             match result:
                 case SceneTransition.MENU:
@@ -143,17 +138,26 @@ class SceneManager:
         Args:
             surface: Pygame surface to draw on
         """
+        logger.debug(f"SceneManager.draw START - current_scene: {self.current_scene}")
+
         match self.current_scene:
             case "main_menu":
+                logger.debug("SceneManager.draw - drawing main menu")
                 self.main_menu_scene.draw(surface)
             case "leaderboard":
+                logger.debug("SceneManager.draw - drawing leaderboard")
                 self.leaderboard_scene.draw(surface)
             case "history":
+                logger.debug("SceneManager.draw - drawing history")
                 self.history_scene.draw(surface)
             case "reset":
+                logger.debug("SceneManager.draw - drawing reset")
                 self.reset_scene.draw(surface)
             case "game":
+                logger.debug("SceneManager.draw - drawing game")
                 self.game_scene.draw(surface)
+
+        logger.debug("SceneManager.draw END")
 
     def on_resize(self, width: int, height: int) -> None:
         """
@@ -167,7 +171,6 @@ class SceneManager:
             self.width = width
             self.height = height
 
-            # Update all scenes
             self.main_menu_scene.on_resize(width, height)
             self.leaderboard_scene.on_resize(width, height)
             self.history_scene.on_resize(width, height)
@@ -208,44 +211,3 @@ class SceneManager:
         self.game_scene.setup_game("pvai", player_name, ai_difficulty=ai_difficulty)
         self.current_scene = "game"
         logger.info(f"Started PvAI game: {player_name} vs AI ({ai_difficulty.value})")
-
-
-# Legacy compatibility functions
-def create_main_menu(screen: pygame.Surface, callbacks: MenuCallbacks) -> SceneManager:
-    """
-    Create the scene manager (legacy compatibility).
-
-    Args:
-        screen: Pygame surface for the menu
-        callbacks: Menu callback functions
-
-    Returns:
-        SceneManager instance
-    """
-    width, height = screen.get_size()
-    scene_manager = SceneManager(Storage(), width, height)
-    scene_manager.set_callbacks(callbacks)
-
-    logger.info("Scene manager created successfully")
-    return scene_manager
-
-
-def get_menu_data(scene_manager: SceneManager) -> dict[str, Any]:
-    """
-    Get current menu data for debugging or state management.
-
-    Args:
-        scene_manager: Scene manager instance
-
-    Returns:
-        Dictionary with current menu values
-    """
-    data = {}
-
-    if hasattr(scene_manager, "main_menu_scene"):
-        main_menu = scene_manager.main_menu_scene
-        data["player_x"] = main_menu.player_x_name
-        data["player_o"] = main_menu.player_o_name
-        data["ai_difficulty"] = main_menu.ai_difficulty.value
-
-    return data

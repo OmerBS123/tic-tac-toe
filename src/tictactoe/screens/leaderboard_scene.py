@@ -40,14 +40,12 @@ class LeaderboardScene(Scene):
         self.layout = compute_layout(width, height)
         self.fonts = make_fonts(self.layout)
 
-        # Colors
         self.bg_color = (18, 18, 18)
         self.title_color = (100, 200, 255)
         self.text_color = (255, 255, 255)
         self.header_color = (200, 200, 200)
         self.accent_color = (100, 200, 255)
 
-        # Layout calculations
         self.title_y = self.layout.safe_margin
         self.table_start_y = self.title_y + self.layout.font_title + 20
         self.row_height = max(30, int(self.layout.font_ui * 1.5))
@@ -69,7 +67,7 @@ class LeaderboardScene(Scene):
                 logger.info("ESC pressed - returning to menu")
                 return SceneTransition.MENU
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+            if event.button == 1:
                 mouse_x, mouse_y = event.pos
                 if self._is_back_button_clicked(mouse_x, mouse_y):
                     logger.info("Back button clicked - returning to menu")
@@ -85,12 +83,10 @@ class LeaderboardScene(Scene):
         """
         surface.fill(self.bg_color)
 
-        # Draw title
         title_text = self.fonts["title"].render("LEADERBOARD", True, self.title_color)
         title_rect = title_text.get_rect(center=(self.width // 2, self.title_y))
         surface.blit(title_text, title_rect)
 
-        # Get leaderboard data
         try:
             leaderboard_data = self.manager.get_leaderboard_data(limit=20)
             self._draw_leaderboard_table(surface, leaderboard_data)
@@ -98,12 +94,14 @@ class LeaderboardScene(Scene):
             logger.error(f"Error drawing leaderboard: {e}")
             self._draw_error_message(surface, "Error loading leaderboard")
 
-        # Draw back button
         self._draw_back_button(surface)
 
-        # Draw instructions
-        instructions = self.fonts["small"].render("Press ESC or click Back to return to menu", True, self.header_color)
-        surface.blit(instructions, (self.width - instructions.get_width() - 20, self.height - 30))
+        instructions = self.fonts["small"].render(
+            "Press ESC or click Back to return to menu", True, self.header_color
+        )
+        surface.blit(
+            instructions, (self.width - instructions.get_width() - 20, self.height - 30)
+        )
 
     def _draw_leaderboard_table(self, surface: pygame.Surface, data) -> None:
         """
@@ -117,29 +115,33 @@ class LeaderboardScene(Scene):
             self._draw_no_data_message(surface)
             return
 
-        # Calculate column widths
-        col_widths = [60, 150, 80, 60, 60, 60, 80, 80, 80]  # Rank, Name, Total, PvP, AI-E, AI-M, AI-H, Win%, Games
+        col_widths = [60, 150, 80, 60, 60, 60, 80, 80, 80]
         col_x_positions = [self.margin_x]
         for width in col_widths[:-1]:
             col_x_positions.append(col_x_positions[-1] + width)
 
-        # Draw headers
         y = self.table_start_y
         for i, header in enumerate(data.headers):
             header_text = self.fonts["ui"].render(header, True, self.header_color)
             surface.blit(header_text, (col_x_positions[i], y))
 
-        # Draw separator line
-        pygame.draw.line(surface, self.header_color, (self.margin_x, y + self.header_height), (self.width - self.margin_x, y + self.header_height), 2)
+        pygame.draw.line(
+            surface,
+            self.header_color,
+            (self.margin_x, y + self.header_height),
+            (self.width - self.margin_x, y + self.header_height),
+            2,
+        )
 
         y += self.header_height + 10
 
-        # Draw rows
         for row in data.rows:
             self._draw_leaderboard_row(surface, row, col_x_positions, y)
             y += self.row_height
 
-    def _draw_leaderboard_row(self, surface: pygame.Surface, row, col_x_positions: list, y: int) -> None:
+    def _draw_leaderboard_row(
+        self, surface: pygame.Surface, row, col_x_positions: list, y: int
+    ) -> None:
         """
         Draw a single leaderboard row.
 
@@ -149,17 +151,22 @@ class LeaderboardScene(Scene):
             col_x_positions: X positions for each column
             y: Y position for the row
         """
-        # Rank with medal - only show medal text, not rank number
         rank_text = row.medal if row.medal else str(row.rank)
         rank_surface = self.fonts["ui"].render(rank_text, True, self.text_color)
         surface.blit(rank_surface, (col_x_positions[0], y))
 
-        # Player name
         name_surface = self.fonts["ui"].render(row.name, True, self.text_color)
         surface.blit(name_surface, (col_x_positions[1], y))
 
-        # Statistics
-        stats = [str(row.total_wins), str(row.pvp_wins), str(row.ai_easy_wins), str(row.ai_medium_wins), str(row.ai_hard_wins), f"{row.win_percentage:.1f}%", str(row.total_games)]  # win_percentage is now already multiplied by 100
+        stats = [
+            str(row.total_wins),
+            str(row.pvp_wins),
+            str(row.ai_easy_wins),
+            str(row.ai_medium_wins),
+            str(row.ai_hard_wins),
+            f"{row.win_percentage:.1f}%",
+            str(row.total_games),
+        ]
 
         for i, stat in enumerate(stats):
             stat_surface = self.fonts["ui"].render(stat, True, self.text_color)
@@ -172,7 +179,9 @@ class LeaderboardScene(Scene):
         Args:
             surface: Pygame surface to draw on
         """
-        message = self.fonts["ui"].render("No games played yet!", True, self.header_color)
+        message = self.fonts["ui"].render(
+            "No games played yet!", True, self.header_color
+        )
         message_rect = message.get_rect(center=(self.width // 2, self.height // 2))
         surface.blit(message, message_rect)
 
@@ -200,17 +209,29 @@ class LeaderboardScene(Scene):
         button_x = 20
         button_y = self.height - 70
 
-        # Draw button background with rounded corners
-        pygame.draw.rect(surface, (80, 80, 80), (button_x, button_y, button_width, button_height), border_radius=8)
-        pygame.draw.rect(surface, (120, 120, 120), (button_x, button_y, button_width, button_height), width=2, border_radius=8)
+        pygame.draw.rect(
+            surface,
+            (80, 80, 80),
+            (button_x, button_y, button_width, button_height),
+            border_radius=8,
+        )
+        pygame.draw.rect(
+            surface,
+            (120, 120, 120),
+            (button_x, button_y, button_width, button_height),
+            width=2,
+            border_radius=8,
+        )
 
-        # Draw button text with larger font
         back_text = self.fonts["ui"].render("Back", True, self.text_color)
-        text_rect = back_text.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
+        text_rect = back_text.get_rect(
+            center=(button_x + button_width // 2, button_y + button_height // 2)
+        )
         surface.blit(back_text, text_rect)
 
-        # Store button rect for click detection
-        self.back_button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+        self.back_button_rect = pygame.Rect(
+            button_x, button_y, button_width, button_height
+        )
 
     def _is_back_button_clicked(self, mouse_x: int, mouse_y: int) -> bool:
         """
@@ -223,4 +244,6 @@ class LeaderboardScene(Scene):
         Returns:
             True if back button was clicked
         """
-        return hasattr(self, "back_button_rect") and self.back_button_rect.collidepoint(mouse_x, mouse_y)
+        return hasattr(self, "back_button_rect") and self.back_button_rect.collidepoint(
+            mouse_x, mouse_y
+        )

@@ -98,10 +98,14 @@ class AI:
                 best_score = score
                 best_move = move
 
-        logger.debug(f"Minimax: Best move ({best_move[0]}, {best_move[1]}) with score {best_score}")
+        logger.debug(
+            f"Minimax: Best move ({best_move[0]}, {best_move[1]}) with score {best_score}"
+        )
         return best_move
 
-    def minimax(self, board: Board, depth: int, is_max: bool, alpha: float, beta: float) -> float:
+    def minimax(
+        self, board: Board, depth: int, is_max: bool, alpha: float, beta: float
+    ) -> float:
         """
         Minimax algorithm with alpha-beta pruning.
 
